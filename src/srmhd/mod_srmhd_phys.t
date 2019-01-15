@@ -361,7 +361,7 @@ contains
 
     ! Set index for auxiliary variables
     xi_  = var_set_auxvar('xi', 'xi')
-    lfac_=var_set_auxvar('lfac_', 'lfac_')
+    lfac_= var_set_auxvar('lfac', 'lfac')
     !nwfluxbc=nwfluxbc+2
 
     nvector      = 2 ! No. vector vars
@@ -621,8 +621,6 @@ contains
        w(ixO^S,p_)   = gamma_1*w(ixO^S, e_)
       end if
     end if
-    ! re-use inv_rho to store inverse of the density
-    inv_rho = 1.0d0 / w(ixO^S, rho_)
 
     call srmhd_get_B2andVdotB(ixI^L,ixO^L,w,.true.,B2,VdotB)
     Loop_idir : do idir=1,ndir
@@ -831,12 +829,12 @@ contains
 
     integer, intent(in)                    :: ixI^L, ixO^L, idim
     double precision, intent(in)           :: w(ixI^S,nw), x(ixI^S,1:ndim)
-    double precision, intent(out)          :: v_idim(ixI^S)
+    double precision, intent(out)          :: v_idim(ixO^S)
     double precision, optional, intent(in) :: VdotB(ixO^S),B2(ixO^S)
 
     double precision                       :: sub_VdotB(ixO^S),sub_B2(ixO^S)
 
-    if(present(B2))then
+    if(present(B2) .and. present(VdotB))then
      v_idim(ixO^S) = (w(ixO^S, mom(idim)) + VdotB*w(ixO^S,mag(idim)))&
                       /(w(ixO^S,xi_)+B2)
     else
