@@ -45,6 +45,7 @@ module mod_physics
   procedure(sub_add_source_geom), pointer :: phys_add_source_geom        => null()
   procedure(sub_add_source), pointer      :: phys_add_source             => null()
   procedure(sub_get_aux), pointer         :: phys_get_aux                => null()
+  procedure(sub_get_aux_prim), pointer    :: phys_get_aux_prim           => null()
   procedure(sub_check_w), pointer         :: phys_check_w                => null()
   procedure(sub_get_pthermal), pointer    :: phys_get_pthermal           => null()
   procedure(sub_boundary_adjust), pointer :: phys_boundary_adjust        => null()
@@ -144,6 +145,13 @@ module mod_physics
        character(len=*), intent(in)    :: subname
      end subroutine sub_get_aux
 
+     !> Compute auxiliaries from primitive variables
+     subroutine sub_get_aux_prim(ixI^L,ixO^L,w)
+       use mod_global_parameters
+       integer, intent(in)             :: ixI^L, ixO^L
+       double precision, intent(inout) :: w(ixI^S,nw)
+     end subroutine sub_get_aux_prim
+
      subroutine sub_check_w(primitive, ixI^L, ixO^L, w, w_flag)
        use mod_global_parameters
        logical, intent(in)          :: primitive
@@ -234,6 +242,9 @@ contains
     if (.not. associated(phys_get_aux)) &
          phys_get_aux => dummy_get_aux
 
+    if (.not. associated(phys_get_aux_prim)) &
+         phys_get_aux_prim => dummy_get_aux_prim
+
     if (.not. associated(phys_check_w)) &
          phys_check_w => dummy_check_w
 
@@ -293,6 +304,12 @@ contains
     logical, intent(in)             :: clipping
     character(len=*), intent(in)    :: subname
   end subroutine dummy_get_aux
+
+  subroutine dummy_get_aux_prim(ixI^L,ixO^L,w)
+    use mod_global_parameters
+    integer, intent(in)             :: ixI^L, ixO^L
+    double precision, intent(inout) :: w(ixI^S,nw)
+  end subroutine dummy_get_aux_prim
 
   subroutine dummy_check_w(primitive, ixI^L, ixO^L, w, w_flag)
     use mod_global_parameters

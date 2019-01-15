@@ -260,6 +260,8 @@ contains
     integer :: idims, iw, ix^L, hxO^L, ixC^L, jxC^L, hxC^L, kxC^L, kkxC^L, kkxR^L
     logical :: transport, new_cmax, patchw(ixI^S)
 
+    if (nwaux > 0) call mpistop("centdiff4: support for auxiliaries is not done yet")
+
     associate(wCT=>sCT%w,w=>s%w)
     ! two extra layers are needed in each direction for which fluxes are added.
     ix^L=ixO^L;

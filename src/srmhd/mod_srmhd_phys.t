@@ -394,6 +394,7 @@ contains
     phys_to_conserved        => srmhd_to_conserved
     phys_to_primitive        => srmhd_to_primitive
     phys_get_aux             => srmhd_get_auxiliary
+    phys_get_aux_prim        => srmhd_get_auxiliary_prim
     phys_check_params        => srmhd_check_params
     phys_check_w             => srmhd_check_w
     phys_get_pthermal        => srmhd_get_pthermal
@@ -538,6 +539,23 @@ contains
        end if cond_einternal
     end if cond_energy
   end subroutine srmhd_check_w
+
+  !> Set auxiliary variables from a primitive state
+  subroutine srmhd_get_auxiliary_prim(ixI^L,ixO^L,w)
+    integer, intent(in)                :: ixI^L, ixO^L
+    double precision, intent(inout)    :: w(ixI^S, nw)
+    double precision, dimension(ixO^S) :: sqrU,B2,VdotB,rhoh,sqrV
+
+    sqrU(ixO^S)    = sum(w(ixO^S, mom(:))**2, dim=ndim+1)
+    w(ixO^S,lfac_) = sqrt(1.0d0+sqrU(ixO^S))
+    sqrV           = sqrU/w(ixO^S,lfac_)
+
+    ! fill the auxiliary variable xi and density D
+    call srmhd_get_enthalpy(ixO^L,w(ixO^S,rho_),w(ixO^S,p_),rhoh)
+
+    ! with enthalpy w: xi= lfac^2 rhoh
+    w(ixO^S,xi_) = w(ixO^S,lfac_)**2.0D0*rhoh(ixO^S)
+  end subroutine srmhd_get_auxiliary_prim
 
   !> Transform primitive variables into conservative ones
   subroutine srmhd_to_conserved(ixI^L,ixO^L,w,x)

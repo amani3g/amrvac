@@ -43,6 +43,13 @@ contains
     wprim=wCT
     call phys_to_primitive(ixI^L,ixI^L,wprim,x)
 
+    ! Copy the auxiliary variables that have been set by phys_to_primitive to
+    ! wCT. Note that auxiliaries should be the same in primitive and
+    ! conservative form.
+    if (nwaux > 0) then
+       wCT(ixI^S, nwflux+1:nwflux+nwaux) = wCT(ixI^S, nwflux+1:nwflux+nwaux)
+    end if
+
     ^D&dxinv(^D)=-qdt/dx^D;
     do idim= idim^LIM
        block%iw0=idim
@@ -137,6 +144,13 @@ contains
 
     wprim=wCT
     call phys_to_primitive(ixI^L,ixI^L,wprim,x)
+
+    ! Copy the auxiliary variables that have been set by phys_to_primitive to
+    ! wCT. Note that auxiliaries should be the same in primitive and
+    ! conservative form.
+    if (nwaux > 0) then
+       wCT(ixI^S, nwflux+1:nwflux+nwaux) = wCT(ixI^S, nwflux+1:nwflux+nwaux)
+    end if
 
     ^D&dxinv(^D)=-qdt/dx^D;
     do idim= idim^LIM
@@ -620,8 +634,18 @@ contains
     if(needprim)then
        call phys_to_conserved(ixI^L,ixI^L,w,x)
     endif
+
+    ! Make sure auxiliary variables are set for the new primitive interface states
+    if (nwaux > 0) then
+       call phys_get_aux_prim(ixI^L,ixL^L,wLp)
+       call phys_get_aux_prim(ixI^L,ixR^L,wRp)
+    end if
+
     wLC(ixL^S,1:nw)=wLp(ixL^S,1:nw)
     wRC(ixR^S,1:nw)=wRp(ixR^S,1:nw)
+
+    ! It is assumed that the auxiliaries are automatically set for the conserved
+    ! variables in the calls below
     call phys_to_conserved(ixI^L,ixL^L,wLC,x)
     call phys_to_conserved(ixI^L,ixR^L,wRC,x)
 
