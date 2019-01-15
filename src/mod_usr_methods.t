@@ -20,7 +20,6 @@ module mod_usr_methods
   procedure(p_no_args), pointer       :: usr_write_analysis   => null()
   procedure(transform_w), pointer     :: usr_transform_w      => null()
   procedure(aux_output), pointer      :: usr_aux_output       => null()
-  procedure(add_aux_names), pointer   :: usr_add_aux_names    => null()
   procedure(sub_modify_io), pointer   :: usr_modify_output    => null()
   procedure(special_convert), pointer :: usr_special_convert  => null()
 
