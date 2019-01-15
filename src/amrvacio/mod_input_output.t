@@ -204,7 +204,7 @@ contains
     typeboundary_max^D = undefined
     }
 
-    allocate(typeboundary(nwflux, 2 * ndim))
+    allocate(typeboundary(nwflux+nwaux, 2 * ndim))
     typeboundary(:, :) = undefined
 
     ! not save physical boundary in dat files by default
@@ -696,9 +696,9 @@ contains
     end if
     }
 
-    ! psi, tracers take the same boundary type as density
-    if (nwfluxbc<nwflux) then
-      do iw = nwfluxbc+1, nwflux
+    ! psi, tracers and auxiliaries take the same boundary type as density
+    if (nwfluxbc<nwflux+nwaux) then
+      do iw = nwfluxbc+1, nwflux+nwaux
         typeboundary(iw,:) = typeboundary(iw_rho, :)
       end do
     end if

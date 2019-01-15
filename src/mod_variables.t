@@ -99,6 +99,26 @@ contains
     end if
   end function var_set_extravar
 
+  !> Set auxiliary variables, which is not advected but has boundary conditions
+  !> (and ghost cells). This has to be done after defining flux variables.
+  function var_set_auxvar(name_cons, name_prim, ix) result(iw)
+    character(len=*), intent(in)  :: name_cons, name_prim
+    integer, intent(in), optional :: ix
+    integer                       :: iw
+
+    nwaux = nwaux + 1
+    nw    = nw + 1
+    iw    = nw
+
+    if (.not. present(ix)) then
+      prim_wnames(iw) = name_cons
+      cons_wnames(iw) = name_prim
+    else
+      write(cons_wnames(iw),"(A,I0)") name_cons, ix
+      write(prim_wnames(iw),"(A,I0)") name_prim, ix
+    end if
+  end function var_set_auxvar
+
   !> Set density variable
   function var_set_rho() result(iw)
     integer :: iw
