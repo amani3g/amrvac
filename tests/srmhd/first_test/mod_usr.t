@@ -22,44 +22,31 @@ contains
                         b1Left,b2Left,b3Left, &
                         xsplit1,coordinate_system
 
-
-    write(*,*)'Reading usr_list'
     do n = 1, size(files)
        open(unitpar, file=trim(files(n)), status="old")
        read(unitpar, usr_list, end=111)
 111    close(unitpar)
     end do
 
+    if(dabs(b1Left-b1Right)>smalldouble)then
+      call mpistop(' In 1D srmhd, we must have b1left=b1Right')
+    end if
+
   end subroutine usr_params_read
 
   subroutine usr_init()
-    usr_set_parameters=> initglobaldata_usr
-    usr_init_one_grid => initonegrid_usr
     call usr_params_read(par_files)
+    usr_init_one_grid => initonegrid_usr
     call set_coordinate_system(trim(coordinate_system))
     call srmhd_activate()
   end subroutine usr_init
 
-  subroutine initglobaldata_usr
-    use mod_variables
-
-    call usr_params_read(par_files) 
-    if(dabs(b1Left-b1Right)>smalldouble)then
-      call mpistop(' it should be b1left=b1Rigth')
-    end if
-  end subroutine initglobaldata_usr
 
   subroutine initonegrid_usr(ixG^L,ixO^L,w,x)
     ! initialize one grid 
     integer, intent(in) :: ixG^L,ixO^L
     double precision, intent(in) :: x(ixG^S,1:ndim)
     double precision, intent(inout) :: w(ixG^S,1:nw)
-
-
-    logical,save     :: first=.true.
-    double precision :: wold(ixG^S,1:nw) 
-
-
 
     where(x(ixG^S,1)<xsplit1)
        w(ixG^S,rho_)     = rholeft
@@ -82,28 +69,8 @@ contains
     endwhere
     if (srmhd_glm) w(ixG^S,psi_)     = 0.0d0
 
-
-
     call srmhd_get_4u_from_3v(ixG^L,ixG^L,w(ixG^S,mom(1):mom(ndir)))
     call srmhd_to_conserved(ixG^L,ixG^L,w,x)
-
-
-
-    wold=w
-
- !    PRINT*,' well see',w(ixG^S,lfac_),mom(1),mag(1)
-
-    call srmhd_to_primitive(ixG^L,ixG^L,w,x)
-! print*,'byyye' ,saveigrid 
-    call srmhd_to_conserved(ixG^L,ixG^L,w,x)
-!    if(maxval(dabs(w(ixG^S,1:nwflux)-wold(ixG^S,1:nwflux)))>1d-7)then
-!      PRINT*,' the max user', (w(ixG^S,1)-wold(ixG^S,1)),all(x(ixG^S,1)<xsplit1)
-!      PRINT*,' the max is ', maxval(dabs(w(ixG^S,1:nwflux)-wold(ixG^S,1:nwflux)))
-!      PRINT*,'the position', maxloc(dabs(w(ixG^S,1:nwflux)-wold(ixG^S,1:nwflux)))
-!PRINT*,' is you',w(ixG^S,lfac_),wold(ixG^S,lfac_)
-!      call mpistop('is wrong ')
-!    end if
-
 
   end subroutine initonegrid_usr
 
