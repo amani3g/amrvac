@@ -1,10 +1,12 @@
 module mod_srmhd_con2prim
-
-
  use mod_global_parameters
  use mod_srmhd_parameters
  use mod_srmhd_eos
+
  implicit none
+ private
+
+ public :: srmhd_con2prim
 
 contains
 subroutine srmhd_con2prim(d,s,tau,b,lfac,xi,ierror)

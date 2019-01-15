@@ -37,7 +37,7 @@ module mod_physics_hllc
        double precision, dimension(ixI^S), intent(in)          :: lambdaCD
        double precision, dimension(ixI^S), intent(in)          :: cmax,cmin
        double precision, dimension(ixI^S,1:nwflux), intent(in) :: fRC,fLC
-       integer, dimension(ixI^S), intent(in)                   :: patchf
+       integer, dimension(ixI^S), intent(inout)                :: patchf
        double precision, dimension(ixI^S,1:nwflux),intent(out) :: f
      end subroutine sub_get_wCD
   end interface
@@ -105,7 +105,7 @@ contains
     double precision, dimension(ixI^S), intent(in)          :: lambdaCD
     double precision, dimension(ixI^S), intent(in)          :: cmax,cmin
     double precision, dimension(ixI^S,1:nwflux), intent(in) :: fRC,fLC
-    integer, dimension(ixI^S), intent(in)                   :: patchf
+    integer, dimension(ixI^S), intent(inout)                :: patchf
     double precision, dimension(ixI^S,1:nwflux),intent(out) :: f
 
     ! Next must normally be computed

@@ -437,10 +437,10 @@ contains
   end subroutine rhos_to_e
 
   !> Calculate v_i = m_i / rho within ixO^L
-  subroutine hd_get_v(w, x, ixI^L, ixO^L, idim, v)
+  subroutine hd_get_v(w, ixI^L, ixO^L, idim, v)
     use mod_global_parameters
     integer, intent(in)           :: ixI^L, ixO^L, idim
-    double precision, intent(in)  :: w(ixI^S, nw), x(ixI^S, 1:ndim)
+    double precision, intent(in)  :: w(ixI^S, nw)
     double precision, intent(out) :: v(ixI^S)
 
     v(ixO^S) = w(ixO^S, mom(idim)) / w(ixO^S, rho_)
@@ -457,7 +457,7 @@ contains
     double precision                          :: csound(ixI^S)
     double precision                          :: v(ixI^S)
 
-    call hd_get_v(w, x, ixI^L, ixO^L, idim, v)
+    call hd_get_v(w, ixI^L, ixO^L, idim, v)
     call hd_get_csound2(w,x,ixI^L,ixO^L,csound)
     csound(ixO^S) = sqrt(csound(ixO^S))
 
@@ -587,7 +587,7 @@ contains
     integer                         :: idir, itr
 
     call hd_get_pthermal(w, x, ixI^L, ixO^L, pth)
-    call hd_get_v(w, x, ixI^L, ixO^L, idim, v)
+    call hd_get_v(w, ixI^L, ixO^L, idim, v)
 
     f(ixO^S, rho_) = v(ixO^S) * w(ixO^S, rho_)
 
@@ -893,7 +893,7 @@ contains
     inv_rho = 1.0d0 / w(ixO^S, rho_)
   end function hd_inv_rho
 
-  subroutine hd_handle_small_values(primitive, w, x, ixI^L, ixO^L, subname)
+  subroutine hd_handle_small_values(primitive, w, x, ixI^L, ixO^L, subname, flag_error)
     use mod_global_parameters
     use mod_small_values
     logical, intent(in)             :: primitive
@@ -901,13 +901,18 @@ contains
     double precision, intent(inout) :: w(ixI^S,1:nw)
     double precision, intent(in)    :: x(ixI^S,1:ndim)
     character(len=*), intent(in)    :: subname
+    integer, optional, intent(in)   :: flag_error(ixO^S)
 
     double precision :: smallone
     integer :: idir, flag(ixI^S)
 
     if (small_values_method == "ignore") return
 
-    call hd_check_w(primitive, ixI^L, ixO^L, w, flag)
+    if (present(flag_error)) then
+       flag(ixO^S) = flag_error
+    else
+       call hd_check_w(primitive, ixI^L, ixO^L, w, flag)
+    end if
 
     if (any(flag(ixO^S) /= 0)) then
       select case (small_values_method)

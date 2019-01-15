@@ -360,8 +360,8 @@ contains
     end do
 
     ! Set index for auxiliary variables
-    xi_  = var_set_auxvar('xi')
-    lfac_=var_set_auxvar('lfac_')
+    xi_  = var_set_auxvar('xi', 'xi')
+    lfac_=var_set_auxvar('lfac_', 'lfac_')
     !nwfluxbc=nwfluxbc+2
 
     nvector      = 2 ! No. vector vars
@@ -809,12 +809,12 @@ contains
 
 
   !> Calculate v component
-  subroutine srmhd_get_v_idim(w,x,ixI^L,ixO^L,idim,v_idim)
+  subroutine srmhd_get_v_idim(w,ixI^L,ixO^L,idim,v_idim)
     ! made by Z. Meliani 10/02/2018 
     use mod_global_parameters
 
     integer, intent(in)                    :: ixI^L, ixO^L, idim
-    double precision, intent(in)           :: w(ixI^S,nw), x(ixI^S,1:ndim)
+    double precision, intent(in)           :: w(ixI^S,nw)
     double precision, intent(out)          :: v_idim(ixI^S)
 
     double precision                       :: sub_VdotB(ixO^S),sub_B2(ixO^S)
@@ -1432,31 +1432,31 @@ contains
         ! Do nothing
       case (divb_glm1)
         active = .true.
-        call add_source_glm1(dt,ixI^L,ixO^L,pw(saveigrid)%wold,w,x)
+        call add_source_glm1(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
       case (divb_glm2)
         active = .true.
-        call add_source_glm2(dt,ixI^L,ixO^L,pw(saveigrid)%wold,w,x)
+        call add_source_glm2(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
       case (divb_powel)
         active = .true.
-        call add_source_powel(dt,ixI^L,ixO^L,pw(saveigrid)%wold,w,x)
+        call add_source_powel(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
       case (divb_janhunen)
         active = .true.
-        call add_source_janhunen(dt,ixI^L,ixO^L,pw(saveigrid)%wold,w,x)
+        call add_source_janhunen(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
       case (divb_linde)
         active = .true.
-        call add_source_linde(dt,ixI^L,ixO^L,pw(saveigrid)%wold,w,x)
+        call add_source_linde(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
       case (divb_lindejanhunen)
         active = .true.
-        call add_source_linde(dt,ixI^L,ixO^L,pw(saveigrid)%wold,w,x)
-        call add_source_janhunen(dt,ixI^L,ixO^L,pw(saveigrid)%wold,w,x)
+        call add_source_linde(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
+        call add_source_janhunen(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
       case (divb_lindepowel)
         active = .true.
-        call add_source_linde(dt,ixI^L,ixO^L,pw(saveigrid)%wold,w,x)
-        call add_source_powel(dt,ixI^L,ixO^L,pw(saveigrid)%wold,w,x)
+        call add_source_linde(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
+        call add_source_powel(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
       case (divb_lindeglm)
         active = .true.
-        call add_source_linde(dt,ixI^L,ixO^L,pw(saveigrid)%wold,w,x)
-        call add_source_glm2(dt,ixI^L,ixO^L,pw(saveigrid)%wold,w,x)
+        call add_source_linde(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
+        call add_source_glm2(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
       case default
         call mpistop('Unknown divB fix')
       end select
@@ -1470,7 +1470,7 @@ contains
         call add_source_glm1(qdt,ixI^L,ixO^L,wCT,w,x)
       case (divb_glm2)
         active = .true.
-        call add_source_glm2(dt,ixI^L,ixO^L,pw(saveigrid)%wold,w,x)
+        call add_source_glm2(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
       case (divb_powel)
         active = .true.
         call add_source_powel(qdt,ixI^L,ixO^L,wCT,w,x)
@@ -2162,7 +2162,7 @@ contains
      do iigrid=1,igridstail; igrid=igrids(iigrid);
         if(.not.phyboundblock(igrid)) cycle
         saveigrid=igrid
-        block=>pw(igrid)
+        block=>ps(igrid)
         ^D&dxlevel(^D)=rnode(rpdx^D_,igrid);
         do idim=1,ndim
            ! to avoid using as yet unknown corner info in more than 1D, we
@@ -2189,7 +2189,7 @@ contains
                       ixOmax^DD=ixGmin^D-1+nghostcells-boundary_divbfix_skip(2*^D-1)^D%ixOmax^DD=ixGmax^DD;
                    end if \}
                 end select
-                call fixdivB_boundary(ixG^L,ixO^L,pw(igrid)%wb,pw(igrid)%x,iB)
+                call fixdivB_boundary(ixG^L,ixO^L,ps(igrid)%w,ps(igrid)%x,iB)
               end if
            end do
         end do

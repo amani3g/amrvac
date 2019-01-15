@@ -220,7 +220,7 @@ if(any(.not.Cond_Bidimhll(ixO^S).and.Cond_patchf(ixO^S)))then
 
   end subroutine srmhd_get_lCD
 
-  subroutine srmhd_get_wCD(x,wLC,wRC,whll,fRC,fLC,Fhll,patchf,lambdaCD,&
+  subroutine srmhd_get_wCD(wLC,wRC,whll,fRC,fLC,Fhll,patchf,lambdaCD,&
                     cmin,cmax,&
                     ixI^L,ixO^L,idim,f)
   ! made by Z. MELIANI 14/02/2018
@@ -233,7 +233,6 @@ if(any(.not.Cond_Bidimhll(ixO^S).and.Cond_patchf(ixO^S)))then
     
     integer, intent(in)                                      :: ixI^L,ixO^L,idim
     double precision, dimension(ixI^S,1:nw), intent(in)      :: wRC,wLC
-    double precision, dimension(ixI^S,1:ndim), intent(in)    :: x
     double precision, dimension(ixI^S,1:nwflux), intent(in)  :: whll, Fhll
     double precision, dimension(ixI^S), intent(in)           :: lambdaCD
     double precision, dimension(ixI^S), intent(in)           :: cmax,cmin
@@ -252,8 +251,8 @@ if(any(.not.Cond_Bidimhll(ixO^S).and.Cond_patchf(ixO^S)))then
     double precision, dimension(ixO^S)             :: VdotB, B2
 
     !-------------- auxiliary Speed and array-------------!
-    call srmhd_get_v_idim(wRC,x,ixI^L,ixO^L,idim,vRC)
-    call srmhd_get_v_idim(wLC,x,ixI^L,ixO^L,idim,vLC)
+    call srmhd_get_v_idim(wRC,ixI^L,ixO^L,idim,vRC)
+    call srmhd_get_v_idim(wLC,ixI^L,ixO^L,idim,vLC)
 
 
     where(patchf(ixO^S) == 1)

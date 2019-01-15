@@ -58,7 +58,7 @@ contains
 
     if(srmhd_energy) then
       ! eq. B15, page 218, Mignone and Bodo 2005, ApJS (beta1)
-      call srmhd_get_p_total(w,pw(saveigrid)%x,ixI^L,ixI^L,ptot)
+      call srmhd_get_p_total(w,ps(saveigrid)%x,ixI^L,ixI^L,ptot)
       where (dabs(ptot(ixRR^S)-ptot(ixLL^S))>smalldouble)
          drho(ixO^S) = dabs((ptot(ixR^S)-ptot(ixL^S))&
               /(ptot(ixRR^S)-ptot(ixLL^S)))
@@ -68,7 +68,7 @@ contains
 
       !  eq. B76, page 48, Miller and Collela 2002, JCP 183, 26
       !  use "dpressure" to save squared sound speed, assume primitive in w
-      call srmhd_get_csound_prim(w,pw(saveigrid)%x,ixI^L,ixO^L,idims,dpressure)
+      call srmhd_get_csound_prim(w,ps(saveigrid)%x,ixI^L,ixO^L,idims,dpressure)
 
       dpressure(ixO^S)  = dabs(ptot(ixR^S)-ptot(ixL^S))&
            /(w(ixO^S,rho_)*dpressure(ixO^S))

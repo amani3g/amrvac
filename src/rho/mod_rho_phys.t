@@ -240,11 +240,11 @@ contains
   end subroutine rho_get_v
 
   !> Calculate simple v component
-  subroutine rho_get_v_idim(w,x,ixI^L,ixO^L,idim,v)
+  subroutine rho_get_v_idim(w,ixI^L,ixO^L,idim,v)
     use mod_global_parameters
 
     integer, intent(in)           :: ixI^L, ixO^L, idim
-    double precision, intent(in)  :: w(ixI^S,nw), x(ixI^S,1:ndim)
+    double precision, intent(in)  :: w(ixI^S,nw)
     double precision, intent(out) :: v(ixI^S)
 
     v(ixO^S) = rho_v(idim)

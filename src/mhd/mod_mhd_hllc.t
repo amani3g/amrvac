@@ -164,7 +164,7 @@ contains
     double precision, dimension(ixI^S,1:nw)        :: wCD,wSub
     double precision, dimension(ixI^S,1:nwflux)    :: fSub
     double precision, dimension(ixI^S)             :: vSub,cspeed,pCD,VdotBCD
-    integer         , dimension(ixI^S), intent(in)           :: patchf
+    integer         , dimension(ixI^S), intent(inout) :: patchf
 
     integer                                        :: n, iw, idir,ix^D
 

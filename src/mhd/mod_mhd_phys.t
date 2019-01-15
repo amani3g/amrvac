@@ -575,7 +575,7 @@ contains
     end if
   end subroutine mhd_to_primitive
 
-  subroutine mhd_handle_small_values(primitive, w, x, ixI^L, ixO^L, subname)
+  subroutine mhd_handle_small_values(primitive, w, x, ixI^L, ixO^L, subname, flag_error)
     use mod_global_parameters
     use mod_small_values
     logical, intent(in)             :: primitive
@@ -583,13 +583,18 @@ contains
     double precision, intent(inout) :: w(ixI^S,1:nw)
     double precision, intent(in)    :: x(ixI^S,1:ndim)
     character(len=*), intent(in)    :: subname
+    integer, optional, intent(in)   :: flag_error(ixO^S)
 
     double precision :: smallone
     integer :: idir, flag(ixI^S)
 
     if (small_values_method == "ignore") return
 
-    call mhd_check_w(primitive, ixI^L, ixO^L, w, flag)
+    if (present(flag_error)) then
+       flag(ixO^S) = flag_error
+    else
+       call mhd_check_w(primitive, ixI^L, ixO^L, w, flag)
+    end if
 
     if (any(flag(ixO^S) /= 0)) then
       select case (small_values_method)
@@ -678,11 +683,11 @@ contains
   end subroutine mhd_get_v
 
   !> Calculate v component
-  subroutine mhd_get_v_idim(w,x,ixI^L,ixO^L,idim,v)
+  subroutine mhd_get_v_idim(w,ixI^L,ixO^L,idim,v)
     use mod_global_parameters
 
     integer, intent(in)           :: ixI^L, ixO^L, idim
-    double precision, intent(in)  :: w(ixI^S,nw), x(ixI^S,1:ndim)
+    double precision, intent(in)  :: w(ixI^S,nw)
     double precision, intent(out) :: v(ixI^S)
 
     v(ixO^S) = w(ixO^S, mom(idim)) / w(ixO^S,rho_)

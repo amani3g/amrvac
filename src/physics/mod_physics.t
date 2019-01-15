@@ -81,11 +81,11 @@ module mod_physics
        double precision, intent(inout) :: cmax(ixI^S)
      end subroutine sub_get_cmax
 
-     subroutine sub_get_v_idim(w,x,ixI^L,ixO^L,idim,v)
+     subroutine sub_get_v_idim(w,ixI^L,ixO^L,idim,v)
        use mod_global_parameters
 
        integer, intent(in)           :: ixI^L, ixO^L, idim
-       double precision, intent(in)  :: w(ixI^S,nw), x(ixI^S,1:^ND)
+       double precision, intent(in)  :: w(ixI^S,nw)
        double precision, intent(out) :: v(ixI^S)
 
      end subroutine sub_get_v_idim
@@ -141,7 +141,7 @@ module mod_physics
        double precision, intent(in)    :: x(ixI^S,1:ndim)
        double precision, intent(inout) :: w(ixI^S,nw)
        logical, intent(in)             :: clipping
-       character(len=*)                :: subname
+       character(len=*), intent(in)    :: subname
      end subroutine sub_get_aux
 
      subroutine sub_check_w(primitive, ixI^L, ixO^L, w, w_flag)
@@ -172,13 +172,15 @@ module mod_physics
        integer, intent(in)                :: idim
      end subroutine sub_angmomfix
 
-     subroutine sub_small_values(primitive, w, x, ixI^L, ixO^L, subname)
+     subroutine sub_small_values(primitive, w, x, ixI^L, ixO^L, subname, flag_error)
        use mod_global_parameters
-       logical, intent(in)             :: primitive
+       logical, intent(in)             :: primitive !< True if the variables are primitive
        integer, intent(in)             :: ixI^L,ixO^L
        double precision, intent(inout) :: w(ixI^S,1:nw)
        double precision, intent(in)    :: x(ixI^S,1:ndim)
-       character(len=*), intent(in)    :: subname
+       character(len=*), intent(in)    :: subname !< Name of the calling subroutine
+       !> Can be used if output of phys_check_w is already known
+       integer, optional, intent(in)   :: flag_error(ixO^S)
      end subroutine sub_small_values
 
   end interface
@@ -289,7 +291,7 @@ contains
     double precision, intent(in)    :: x(ixI^S,1:ndim)
     double precision, intent(inout) :: w(ixI^S,nw)
     logical, intent(in)             :: clipping
-    character(len=*)                :: subname
+    character(len=*), intent(in)    :: subname
   end subroutine dummy_get_aux
 
   subroutine dummy_check_w(primitive, ixI^L, ixO^L, w, w_flag)
@@ -336,13 +338,14 @@ contains
     integer, intent(in)                :: idim
   end subroutine dummy_angmomfix
 
-  subroutine dummy_small_values(primitive, w, x, ixI^L, ixO^L, subname)
+  subroutine dummy_small_values(primitive, w, x, ixI^L, ixO^L, subname, flag_error)
     use mod_global_parameters
     logical, intent(in)             :: primitive
     integer, intent(in)             :: ixI^L,ixO^L
     double precision, intent(inout) :: w(ixI^S,1:nw)
     double precision, intent(in)    :: x(ixI^S,1:ndim)
     character(len=*), intent(in)    :: subname
+    integer, optional, intent(in)   :: flag_error(ixO^S)
   end subroutine dummy_small_values
-  
+
 end module mod_physics

@@ -146,7 +146,7 @@ if(need_global_vmax) then
   cmax_mype=0.d0
   do iigrid=1,igridstail_active; igrid=igrids_active(iigrid);
      do idim=1,ndim
-       call phys_get_v_idim(ps(igrid)%w,ps(igrid)%x,ixG^LL,ixM^LL,idim,v)
+       call phys_get_v_idim(ps(igrid)%w,ixG^LL,ixM^LL,idim,v)
        cmax_mype=max(cmax_mype,maxval(abs(v(ixM^T))))
      end do
   end do
