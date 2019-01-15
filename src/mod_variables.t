@@ -62,6 +62,9 @@ contains
     integer                       :: iw
     logical                       :: add_bc
 
+    if (nwextra > 0) call mpistop("var_set_fluxvar called after var_set_extravar")
+    if (nwaux > 0) call mpistop("var_set_fluxvar called after var_set_auxvar")
+
     nwflux = nwflux + 1
     nw     = nw + 1
     iw     = nwflux
@@ -80,7 +83,7 @@ contains
   end function var_set_fluxvar
 
   !> Set extra variable, which is not advected and has no boundary conditions.
-  !> This has to be done after defining flux variables.
+  !> This has to be done after defining flux and auxiliary variables.
   function var_set_extravar(name_cons, name_prim, ix) result(iw)
     character(len=*), intent(in)  :: name_cons, name_prim
     integer, intent(in), optional :: ix
@@ -100,22 +103,25 @@ contains
   end function var_set_extravar
 
   !> Set auxiliary variables, which is not advected but has boundary conditions
-  !> (and ghost cells). This has to be done after defining flux variables.
-  function var_set_auxvar(name_cons, name_prim, ix) result(iw)
-    character(len=*), intent(in)  :: name_cons, name_prim
+  !> (and ghost cells). Auxiliaries are the same in primitive and conservative
+  !> from. This has to be done after defining flux variables.
+  function var_set_auxvar(name, ix) result(iw)
+    character(len=*), intent(in)  :: name
     integer, intent(in), optional :: ix
     integer                       :: iw
+
+    if (nwextra > 0) call mpistop("var_set_auxvar called after var_set_extravar")
 
     nwaux = nwaux + 1
     nw    = nw + 1
     iw    = nw
 
     if (.not. present(ix)) then
-      prim_wnames(iw) = name_cons
-      cons_wnames(iw) = name_prim
+      prim_wnames(iw) = name
+      cons_wnames(iw) = name
     else
-      write(cons_wnames(iw),"(A,I0)") name_cons, ix
-      write(prim_wnames(iw),"(A,I0)") name_prim, ix
+      write(cons_wnames(iw),"(A,I0)") name, ix
+      write(prim_wnames(iw),"(A,I0)") name, ix
     end if
   end function var_set_auxvar
 

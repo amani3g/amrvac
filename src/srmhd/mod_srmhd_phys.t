@@ -360,8 +360,8 @@ contains
     end do
 
     ! Set index for auxiliary variables
-    xi_  = var_set_auxvar('xi', 'xi')
-    lfac_= var_set_auxvar('lfac', 'lfac')
+    xi_  = var_set_auxvar('xi')
+    lfac_= var_set_auxvar('lfac')
     !nwfluxbc=nwfluxbc+2
 
     nvector      = 2 ! No. vector vars
