@@ -2584,13 +2584,16 @@ contains
     double precision, intent(inout) :: w(ixI^S,1:nw)
     character(len=*), intent(in)    :: subname
   
-    integer                             :: ix^D,ierror
-    integer                             :: flag_error(ixO^S)
-    character(len=len(subname)+30):: subname_loc
-  ! print*,', is yooou ',subname,saveigrid
-   {do ix^DB=ixOmin^DB,ixOmax^DB\}
-    call srmhd_con2prim(w(ix^D,d_),w(ix^D,mom(1):mom(ndir)),w(ix^D,e_),&
-             w(ix^D,mag(1):mag(ndir)),w(ix^D,lfac_),w(ix^D,xi_),ierror)
+    integer                        :: ix^D,ierror
+    integer                        :: flag_error(ixO^S)
+    character(len=len(subname)+30) :: subname_loc
+    double precision               :: mom_vec(ndir), mag_vec(ndir)
+
+    {do ix^DB=ixOmin^DB,ixOmax^DB\}
+    mom_vec = w(ix^D,mom(1):mom(ndir))
+    mag_vec = w(ix^D,mag(1):mag(ndir))
+    call srmhd_con2prim(w(ix^D,d_),mom_vec,w(ix^D,e_),&
+             mag_vec,w(ix^D,lfac_),w(ix^D,xi_),ierror)
     if(check_small_values)then
      if(ierror/=0) then
        flag_error(ix^D) = ierror
