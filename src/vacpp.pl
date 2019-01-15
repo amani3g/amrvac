@@ -552,14 +552,11 @@ sub format90 {
    # If line is not too long return
    return($line) if length($line)<=$maxlen;
 
-   if ($line =~ /^ *!\$OMP/ || $line =~ /^ *print *\*.*& *$/ ||
-        $line =~ /\/\/ *& *$/) {
+   if ($line =~ /^ *!\$OMP/ || $line =~ /^ *print/ ||
+        $line =~ /\/\/ *& *$/ || $line =~ /^ *call mpistop/) {
        # Don't break OpenMP, print and //&
        return ($line);
    }
-
-   # Don't break lines with print statements
-   return($line) if ($line =~ /^ *(print)/);
 
    # Determine line indentation. If too much, reduce it to maximum.
    $maxindent=int(0.6*$maxlen);
