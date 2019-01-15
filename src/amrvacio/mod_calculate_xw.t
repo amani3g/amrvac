@@ -302,7 +302,6 @@ subroutine getheadernames(wnamei,xandwnamei,outfilehead)
 ! the dimensional names, and only those names from the nw variables for output (through w_write)
 ! together with the added names for nwauxio variables
 
-  use mod_usr_methods, only: usr_add_aux_names
   use mod_global_parameters
 
 character(len=name_len)   :: wnamei(1:nw+nwauxio),xandwnamei(1:ndim+nw+nwauxio)
@@ -315,38 +314,12 @@ character(len=std_len)::  scanstring
 
 logical, save:: first=.true.
 !-----------------------------------------------------------------------------
-
-! in case additional variables are computed and stored for output
-if (nwauxio>0) then
-   if (.not. associated(usr_add_aux_names)) then
-      call mpistop("usr_add_aux_names not defined")
-   else
-      call usr_add_aux_names(aux_variable_names)
-   end if
-end if
-
 ! --- part to provide variable names from prim_wnames/cons_wnames strings
 if(saveprim) then
-   scanstring=TRIM(aux_variable_names)
    wnamei(1:nw)=prim_wnames(1:nw)
 else
-   scanstring=TRIM(aux_variable_names)
    wnamei(1:nw)=cons_wnames(1:nw)
 endif
-
-space_position=index(scanstring,' ')
-do iw=nw+1,nw+nwauxio
-   do while (space_position==1)
-     scanstring=scanstring(2:)
-     space_position=index(scanstring,' ')
-   enddo
-   wname=scanstring(:space_position-1)
-   scanstring=scanstring(space_position+1:)
-   space_position=index(scanstring,' ')
-
-   ! fill all names, even those that we will not write away from the first nw
-   wnamei(iw)=TRIM(wname)
-enddo
 ! --- end of part to provide variable names 
 
 select case (typeaxial)
