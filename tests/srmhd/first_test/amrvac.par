@@ -1,5 +1,5 @@
  &filelist
-        base_filename='RiemannProblem'
+        base_filename='RiemannProblemNew'
         autoconvert=.true.
         saveprim=.true.
  /
@@ -28,8 +28,8 @@
  /
 
  &boundlist
-        typeboundary_min1=8*'cont'
-        typeboundary_max1=8*'cont'
+        typeboundary_min1=10*'cont'
+        typeboundary_max1=10*'cont'
  /
 
  &meshlist

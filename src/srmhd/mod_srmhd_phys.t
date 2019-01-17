@@ -1,4 +1,5 @@
-!> Special Relativistic Magneto-hydrodynamics module
+!> Special Relativistic Magnetohydrodynamics module
+! made by Z. Meliani 20/02/2018, updated R. Keppens January 2019
 module mod_srmhd_phys
   use mod_global_parameters, only: std_len
   use mod_srmhd_parameters
@@ -6,145 +7,6 @@ module mod_srmhd_phys
   
   implicit none
   private
-
-!  !> Whether an energy equation is used
-!  logical, public, protected              :: srmhd_energy = .true.
-
-!  !> Whether thermal conduction is used
-!  logical, public, protected              :: srmhd_thermal_conduction = .false.
-
-!  !> Whether radiative cooling is added
-!  logical, public, protected              :: srmhd_radiative_cooling = .false.
-
-
-!  !> Whether synge eos  is added
-!  logical, public, protected              :: srmhd_eos = .false.
-
-!  !> Whether viscosity is added
-!  logical, public, protected              :: srmhd_viscosity = .false.
-
-!  !> Whether gravity is added
-!  logical, public, protected              :: srmhd_gravity = .false.
-
-!  !> Whether Hall-MHD is used
-!  logical, public, protected              :: srmhd_Hall = .false.
-
-!  !> Whether particles module is added
-!  logical, public, protected              :: srmhd_particles = .false.
-
-!  !> Whether magnetofriction is added
-!  logical, public, protected              :: srmhd_magnetofriction = .false.
-
-!  !> Whether GLM-MHD is used
-!  logical, public, protected              :: srmhd_glm = .false.
-
-!  !> Whether divB cleaning sources are added splitting from fluid solver
-!  logical, public, protected              :: source_split_divb = .false.
-
-!  !> GLM-MHD parameter: ratio of the diffusive and advective time scales for div b
-!  !> taking values within [0, 1]
-!  double precision, public                :: srmhd_glm_alpha = 0.5d0
-
-!  !> MHD fourth order
-!  logical, public, protected              :: srmhd_4th_order = .false.
-
-!  !> Number of tracer species
-!  integer, public, protected              :: srmhd_n_tracer = 0
-
-!  !> Index of the density (in the w array)
-!  integer, public, protected              :: rho_
-!
-!  !> Indices of the momentum density
-!  integer, allocatable, public, protected :: mom(:)
-!
-!  !> Index of the energy density (-1 if not present)
-!  integer, public, protected              :: e_
-
-!  !> Index of the gas pressure (-1 if not present) should equal e_
-!  integer, public, protected              :: p_
-
-!  !> Indices of the magnetic field
-!  integer, allocatable, public, protected :: mag(:)
-
-!  !> Indices of the GLM psi
-!  integer, public, protected :: psi_
-
-!  !> Indices of the tracers
-!  integer, allocatable, public, protected :: tracer(:)
-!
-!  !> The adiabatic index
-!  double precision, public                :: srmhd_gamma = 5.d0/3.0d0
-!
-!  !> The adiabatic constant
-!  double precision, public                :: srmhd_adiab = 1.0d0
-!
-!  !> The MHD resistivity
-!  double precision, public                :: srmhd_eta = 0.0d0
-
-!  !> The MHD hyper-resistivity
-!  double precision, public                :: srmhd_eta_hyper = 0.0d0
-
-!  !> TODO: what is this?
-!  double precision, public                :: srmhd_etah = 0.0d0
-
-
-!  logical,          public, protected     :: srmhd_checkNR = .true.
-!  double precision, public, protected     :: srmhd_absaccnr=1.0d-8
-!  double precision, public, protected     :: srmhd_tolerNR =1.0d-9
-
-!  !> The small_est allowed energy
-!  double precision, protected             :: small_e
-
-
-!  !> The small_est allowed inertia
-!  double precision, protected             :: small_xi
-  
-!  ! smaller values for speed
-!  double precision, public, protected             :: small_vec2  = 0.0
-!  !> The number of waves
-!  integer :: nwwave=8
-
-!  !> Method type to clean divergence of B
-!  character(len=std_len), public, protected :: typedivbfix  = 'linde'
-!
-!  !> Method type in a integer for good performance
-!  integer :: type_divb
-!
-!  !> Coefficient of diffusive divB cleaning
-!  double precision :: divbdiff     = 0.8d0
-!
-!  !> Update all equations due to divB cleaning
-!  character(len=std_len) ::    typedivbdiff = 'all'
-
-!  !> Use a compact way to add resistivity
-!  logical :: compactres   = .false.
-
-!  !> Add divB wave in Roe solver
-!  logical, public :: divbwave     = .true.
-
-!  !> Helium abundance over Hydrogen
-!  double precision, public, protected  :: He_abundance=0.1d0
-
-!  !> To control divB=0 fix for boundary
-!  logical, public, protected :: boundary_divbfix(2*^ND)=.true.
-
-!  !> To skip * layer of ghost cells during divB=0 fix for boundary
-!  integer, public, protected :: boundary_divbfix_skip(2*^ND)=0
-
-!  !> B0 field is force-free
-!  logical, public, protected :: B0field_forcefree=.true.
-
-
-!  ! DivB cleaning methods
-!  integer, parameter :: divb_none          = 0
-!  integer, parameter :: divb_glm1          = 1
-!  integer, parameter :: divb_glm2          = 2
-!  integer, parameter :: divb_powel         = 3
-!  integer, parameter :: divb_janhunen      = 4
-!  integer, parameter :: divb_linde         = 5
-!  integer, parameter :: divb_lindejanhunen = 6
-!  integer, parameter :: divb_lindepowel    = 7
-!  integer, parameter :: divb_lindeglm      = 8
 
   ! Public methods
   public :: srmhd_phys_init
@@ -166,25 +28,19 @@ contains
 
   !> Read this module"s parameters from a file
   subroutine srmhd_read_params(files)
-    ! made by Z. Meliani 20/02/2018 
     use mod_global_parameters
     character(len=*), intent(in) :: files(:)
     integer                      :: n
 
-    namelist /srmhd_list/ srmhd_energy, srmhd_eos,srmhd_n_tracer, srmhd_gamma, &
-                          srmhd_adiab, srmhd_eta, srmhd_eta_hyper, &
-                          srmhd_etah, srmhd_glm_alpha, srmhd_magnetofriction,&
-                          srmhd_thermal_conduction, srmhd_radiative_cooling, &
-                          srmhd_Hall, srmhd_gravity, srmhd_viscosity, &
-                          srmhd_4th_order, typedivbfix, source_split_divb, &
-                          divbdiff, typedivbdiff, compactres, divbwave, srmhd_glm,&
-                          He_abundance, SI_unit, B0field,&
-                          B0field_forcefree, Bdip, Bquad, Boct, Busr, &
-                          srmhd_particles, boundary_divbfix, &
-                          boundary_divbfix_skip, &
-                          srmhd_maxiterationNR, srmhd_absaccNR,srmhd_tolerNr,&
-                          srmhd_checkNR,srmhd_maxdspeed,small_vec2
-    write(*,*)'Reading srmhd_list'
+    namelist /srmhd_list/ srmhd_energy, srmhd_eos, srmhd_n_tracer, srmhd_gamma, &
+                          srmhd_adiab, He_abundance, SI_unit, srmhd_particles, &
+                          srmhd_glm_alpha, srmhd_4th_order, &
+                          typedivbfix, source_split_divb, &
+                          divbdiff, divbwave, srmhd_glm,&
+                          boundary_divbfix, boundary_divbfix_skip, &
+                          srmhd_maxiterationNR, srmhd_absaccNR, srmhd_tolerNR,&
+                          srmhd_checkNR, srmhd_maxdspeed, small_vec2
+
     do n = 1, size(files)
        open(unitpar, file=trim(files(n)), status="old")
        read(unitpar, srmhd_list, end=111)
@@ -195,7 +51,6 @@ contains
 
   !> Write this module's parameters to a snapsoht
   subroutine srmhd_write_info(fh)
-    ! made by Z. Meliani 10/02/2018 
     use mod_global_parameters
     integer, intent(in)                 :: fh
     integer, parameter                  :: n_par = 1
@@ -212,89 +67,32 @@ contains
     call MPI_FILE_WRITE(fh, names, n_par * name_len, MPI_CHARACTER, st, er)
   end subroutine srmhd_write_info
 
-  subroutine srmhd_angmomfix(fC,x,wnew,ixI^L,ixO^L,idim)
-    use mod_global_parameters
-    double precision, intent(in)       :: x(ixI^S,1:ndim)
-    double precision, intent(inout)    :: fC(ixI^S,1:nwflux,1:ndim),  wnew(ixI^S,1:nw)
-    integer, intent(in)                :: ixI^L, ixO^L
-    integer, intent(in)                :: idim
-    integer                            :: hxO^L, kxC^L, iw
-    double precision                   :: inv_volume(ixI^S)
-
-    call mpistop("to do")
-    ! ! shifted indexes
-    ! hxO^L=ixO^L-kr(idim,^D);
-    ! ! all the indexes
-    ! kxCmin^D=hxOmin^D;
-    ! kxCmax^D=ixOmax^D;
-    !
-    ! inv_volume = 1.0d0/block%dvolume(ixO^S)
-    !
-    ! select case(typeaxial)
-    ! case ("cylindrical")
-    !   do iw=1,nwflux
-    !     if (idim==r_ .and. iw==iw_mom(phi_)) then
-    !       fC(kxC^S,iw,idim)= fC(kxC^S,iw,idim)*(x(kxC^S,r_)+half*block%dx(kxC^S,r_))
-    !       wnew(ixO^S,iw)=wnew(ixO^S,iw) + (fC(ixO^S,iw,idim)-fC(hxO^S,iw,idim)) * &
-    !            (inv_volume/x(ixO^S,r_))
-    !     else
-    !       wnew(ixO^S,iw)=wnew(ixO^S,iw) + (fC(ixO^S,iw,idim)-fC(hxO^S,iw,idim)) * &
-    !             inv_volume
-    !     endif
-    !   enddo
-    ! case ("spherical")
-    !   do iw=1,nwflux
-    !     if     (idim==r_ .and. (iw==iw_mom(2) .or. iw==iw_mom(phi_))) then
-    !       fC(kxC^S,iw,idim)= fC(kxC^S,iw,idim)*(x(kxC^S,r_)+half*block%dx(kxC^S,r_))
-    !       wnew(ixO^S,iw)=wnew(ixO^S,iw) + (fC(ixO^S,iw,idim)-fC(hxO^S,iw,idim)) * &
-    !            (inv_volume/x(ixO^S,r_))
-    !     elseif (idim==2  .and. iw==iw_mom(phi_)) then
-    !       fC(kxC^S,iw,idim)=fC(kxC^S,iw,idim)*dsin(x(kxC^S,2)+half*block%dx(kxC^S,2)) ! (x(4,3,1)-x(3,3,1)))
-    !       wnew(ixO^S,iw)=wnew(ixO^S,iw) + (fC(ixO^S,iw,idim)-fC(hxO^S,iw,idim)) * &
-    !            (inv_volume/dsin(x(ixO^S,2)))
-    !     else
-    !       wnew(ixO^S,iw)=wnew(ixO^S,iw) + (fC(ixO^S,iw,idim)-fC(hxO^S,iw,idim)) * &
-    !             inv_volume
-    !     endif
-    !   enddo
-    !
-    !   ! if (idim==r_) then
-    !   !   fC(kxC^S,iw_mom(phi_),idim)= fC(kxC^S,iw_mom(phi_),idim)*(x(kxC^S,r_)+half*block%dx(kxC^S,r_))
-    !   !   fC(kxC^S,iw_mom(phi_),idim)= fC(kxC^S,iw_mom(phi_),idim)*(x(kxC^S,r_)+half*block%dx(kxC^S,r_))
-    !   !   wnew(ixO^S,iw_mom(phi_))=wnew(ixO^S,iw_mom(phi_)) + (fC(ixO^S,iw_mom(phi_),idim)-fC(hxO^S,iw_mom(phi_),idim)) * &
-    !   !        (inv_volume/x(ixO^S,r_))
-    !   !
-    !   ! elseif (idim==2) then
-    !   !   fC(hxOmin1:hxOmax1,hxOmin2,hxOmin3:hxOmax3,iw,idim)=fC(hxOmin1:hxOmax1,hxOmin2,hxOmin3:hxOmax3,iw,idim)*dsin(x(hxOmin1:hxOmax1,hxOmin2,hxOmin3:hxOmax3,2)+half*block%dx(hxOmin1:hxOmax1,hxOmin2,hxOmin3:hxOmax3,2)) ! (x(4,3,1)-x(3,3,1)))
-    !   !   fC(ixO^S,iw,idim)=fC(ixO^S,iw,idim)*dsin(x(ixO^S,2)+half*block%dx(ixO^S,2)) ! (x(4,3,1)-x(3,3,1)))
-    !   !   wnew(ixO^S,iw)=wnew(ixO^S,iw) + (fC(ixO^S,iw,idim)-fC(hxO^S,iw,idim)) * &
-    !   !        (inv_volume/dsin(x(ixO^S,2)))
-    !   ! endif
-    !
-    ! end select
-
-  end subroutine srmhd_angmomfix
-
   subroutine srmhd_phys_init()
-    ! made by Z. Meliani 10/02/2018 
     use mod_global_parameters
-    use mod_thermal_conduction
-    use mod_radiative_cooling
-    use mod_viscosity, only: viscosity_init
-    use mod_gravity, only: gravity_init
     use mod_particles, only: particles_init
-    use mod_magnetofriction, only: magnetofriction_init
     use mod_physics
 
     integer :: itr, idir
-    unit_velocity=const_c
+
+
     call srmhd_read_params(par_files)
 
     physics_type = "srmhd"
     phys_energy=srmhd_energy
+
     ! set default gamma for polytropic/isothermal process
-    if(.not.srmhd_energy) srmhd_gamma=1.d0
+    if(.not.srmhd_energy) then
+       srmhd_gamma=1.d0
+    else
+       ! set derived quantities
+       gamma_1=srmhd_gamma-1.0d0
+       inv_gamma_1=1.d0/gamma_1
+       gamma_to_gamma_1=srmhd_gamma/gamma_1
+    endif
+    
     use_particles=srmhd_particles
+    srmhd_maxspeed=1.0d0-srmhd_maxdspeed
+
     if(ndim==1) typedivbfix='none'
     select case (typedivbfix)
     case ('none')
@@ -308,16 +106,12 @@ contains
       need_global_cmax = .true.
       need_global_vmax = .true.
       type_divb        = divb_glm2
-    case ('powel', 'powell')
-      type_divb = divb_powel
     case ('janhunen')
       type_divb = divb_janhunen
     case ('linde')
       type_divb = divb_linde
     case ('lindejanhunen')
       type_divb = divb_lindejanhunen
-    case ('lindepowel')
-      type_divb = divb_lindepowel
     case ('lindeglm')
       srmhd_glm          = .true.
       need_global_cmax = .true.
@@ -362,12 +156,13 @@ contains
     ! Set index for auxiliary variables
     xi_  = var_set_auxvar('xi')
     lfac_= var_set_auxvar('lfac')
-    !nwfluxbc=nwfluxbc+2
+    ! auxiliary variables need boundary conditions
+    nwfluxbc=nwfluxbc+2
 
     nvector      = 2 ! No. vector vars
     allocate(iw_vector(nvector))
-    iw_vector(1) = mom(1) - 1   ! TODO: why like this?
-    iw_vector(2) = mag(1) - 1   ! TODO: why like this?
+    iw_vector(1) = mom(1) - 1   
+    iw_vector(2) = mag(1) - 1  
 
     ! Check whether custom flux types have been defined
     if (.not. allocated(flux_type)) then
@@ -380,9 +175,6 @@ contains
       if(ndim>1) flux_type(idir,mag(idir))=flux_tvdlf
     end do
     if(srmhd_glm .and. ndim>1) flux_type(:,psi_)=flux_tvdlf
-
-    srmhd_maxspeed=1.0-srmhd_maxdspeed
-
 
     phys_get_dt              => srmhd_get_dt
     phys_get_cmax            => srmhd_get_cmax
@@ -400,7 +192,6 @@ contains
     phys_get_pthermal        => srmhd_get_pthermal
     phys_boundary_adjust     => srmhd_boundary_adjust
     phys_write_info          => srmhd_write_info
-    phys_angmomfix           => srmhd_angmomfix
     phys_handle_small_values => srmhd_handle_small_values
 
     ! Whether diagonal ghost cells are required for the physics
@@ -409,43 +200,11 @@ contains
     ! derive units from basic units
     call srmhd_physical_units()
 
-    if(.not. srmhd_energy .and. srmhd_thermal_conduction) then
-      call mpistop("thermal conduction needs srmhd_energy=T")
-    end if
-    if(.not. srmhd_energy .and. srmhd_radiative_cooling) then
-      call mpistop("radiative cooling needs srmhd_energy=T")
-    end if
-
-    ! initialize thermal conduction module
-    !if (srmhd_thermal_conduction) then
-    !  phys_req_diagonal = .true.
-    !  call thermal_conduction_init(srmhd_gamma)
-    !end if
-
-    ! Initialize radiative cooling module
-    !if (srmhd_radiative_cooling) then
-    !  call radiative_cooling_init(srmhd_gamma,He_abundance)
-    !end if
-
-    ! Initialize viscosity module
-    !if (srmhd_viscosity) call viscosity_init(phys_wider_stencil,phys_req_diagonal)
-
-    ! Initialize gravity module
-    if(srmhd_gravity) then
-      call gravity_init()
-    end if
-
     ! Initialize particles module
     if(srmhd_particles) then
       call particles_init()
       phys_req_diagonal = .true.
     end if
-
-    ! initialize magnetofriction module
-    !if(srmhd_magnetofriction) then
-    !  phys_req_diagonal = .true.
-    !  call magnetofriction_init()
-    !end if
 
     if(type_divb==divb_glm1) then
       ! Solve the Riemann problem for the linear 2x2 system for normal
@@ -453,29 +212,15 @@ contains
       phys_modify_wLR => glmSolve
     end if
 
-    ! For Hall, we need one more reconstructed layer since currents are computed
-    ! in getflux: assuming one additional ghost layer (two for FOURTHORDER) was
-    ! added in nghostcells.
-    !if (srmhd_hall) then
-    !   if (srmhd_4th_order) then
-    !      phys_wider_stencil = 2
-    !   else
-    !      phys_wider_stencil = 1
-    !   end if
-    !end if
-
   end subroutine srmhd_phys_init
 
   subroutine srmhd_check_params
     use mod_global_parameters
 
     ! after user parameter setting
-    gamma_1=srmhd_gamma-1.0d0
-    inv_gamma_1=1.d0/gamma_1
-    gamma_to_gamma_1=srmhd_gamma/gamma_1
     if (.not. srmhd_energy) then
        if (srmhd_gamma <= 0.0d0) call mpistop ("Error: srmhd_gamma <= 0")
-       if (srmhd_adiab < 0.0d0) call mpistop ("Error: srmhd_adiab < 0")
+       if (srmhd_adiab <  0.0d0) call mpistop ("Error: srmhd_adiab < 0")
        small_pressure = srmhd_adiab*small_density**srmhd_gamma
     else
        if (srmhd_gamma <= 0.0d0 .or. srmhd_gamma == 1.0d0) &
@@ -489,30 +234,29 @@ contains
   subroutine srmhd_physical_units()
     use mod_global_parameters
     double precision :: mp,kB,miu0
+
+    ! note const_c is in cgs 
     ! Derive scaling units
     if(SI_unit) then
       mp=mp_SI
       kB=kB_SI
       miu0=miu0_SI
+      unit_velocity=const_c/100.0d0
     else
       mp=mp_cgs
       kB=kB_cgs
       miu0=4.d0*dpi
+      unit_velocity=const_c
     end if
-    if(unit_velocity==0) then
-      call mpistop ("Error: in srmhd the unit_velocity=c")
-    else
-      unit_density=(1.d0+4.d0*He_abundance)*mp*unit_numberdensity
-      unit_pressure=unit_density*unit_velocity**2
-      unit_temperature=unit_pressure/((2.d0+3.d0*He_abundance)*unit_numberdensity*kB)
-      unit_magneticfield=sqrt(miu0*unit_pressure)
-      unit_time=unit_length/unit_velocity
-    end if
+    unit_density=(1.d0+4.d0*He_abundance)*mp*unit_numberdensity
+    unit_pressure=unit_density*unit_velocity**2
+    unit_temperature=unit_pressure/((2.d0+3.d0*He_abundance)*unit_numberdensity*kB)
+    unit_magneticfield=sqrt(miu0*unit_pressure)
+    unit_time=unit_length/unit_velocity
 
   end subroutine srmhd_physical_units
 
   subroutine srmhd_check_w(primitive,ixI^L,ixO^L,w,flag)
-    ! made by Z. Meliani 10/02/2018 
     use mod_global_parameters
 
     logical, intent(in)            :: primitive
@@ -522,22 +266,24 @@ contains
     double precision :: tmp(ixI^S)
 
     flag(ixO^S)=0
-    where(w(ixO^S, rho_)/w(ixO^S,lfac_) < small_density) flag(ixO^S) = rho_
+    if (primitive) then
+       where(w(ixO^S, rho_) < small_density) flag(ixO^S) = rho_
+    else
+       where(w(ixO^S, d_)/w(ixO^S,lfac_) < small_density) flag(ixO^S) = rho_
+    endif
 
-    cond_energy : if (srmhd_energy) then
-       cond_einternal : if (block%e_is_internal) then
-          where(w(ixO^S, e_) < small_pressure*inv_gamma_1) flag(ixO^S) = e_
-       else cond_einternal
-         is_prim : if (primitive)then
-           where(w(ixO^S, p_) < small_pressure) flag(ixO^S) = p_ ! p_=e_
-         else is_prim
-           ! Calculate pressure=(gamma-1)*(e-0.5*(2ek+2eb))
-           ! in srmhd we check if xi-p-d is positive
-             ! do be done
-             !where(tmp(ixO^S) < small_pressure) flag(ixO^S) = e_
-         end if is_prim
-       end if cond_einternal
-    end if cond_energy
+    if (srmhd_energy) then
+       if (block%e_is_internal) then
+          where(w(ixO^S, e_) < small_e) flag(ixO^S) = e_
+       else
+          if (primitive)then
+            where(w(ixO^S, p_) < small_pressure) flag(ixO^S) = p_ ! p_=e_
+          else 
+            where(w(ixO^S, e_) < small_e) flag(ixO^S) = e_
+         end if 
+       end if 
+    end if 
+
   end subroutine srmhd_check_w
 
   !> Set auxiliary variables from a primitive state
@@ -554,12 +300,49 @@ contains
     call srmhd_get_enthalpy(ixO^L,w(ixO^S,rho_),w(ixO^S,p_),rhoh)
 
     ! with enthalpy w: xi= lfac^2 rhoh
-    w(ixO^S,xi_) = w(ixO^S,lfac_)**2.0D0*rhoh(ixO^S)
+    w(ixO^S,xi_) = w(ixO^S,lfac_)**2.0d0*rhoh(ixO^S)
+
   end subroutine srmhd_get_auxiliary_prim
+
+  !> Calculate B2 and/or VdotB in ixO^S from conserved or primitive variables
+  subroutine srmhd_get_B2andVdotB(ixI^L,ixO^L,w,wconserve,B2,VdotB)
+    use mod_global_parameters
+    implicit none
+    integer, intent(in)                      :: ixI^L, ixO^L
+    ! conservative or primitive w
+    double precision, intent(in)             :: w(ixI^S,nw) 
+    logical, intent(in)                      :: wconserve  
+    double precision,optional, intent(inout) :: B2(ixO^S),VdotB(ixO^S)
+
+    if(present(VdotB))then
+       if(wconserve)then
+         VdotB = sum(w(ixO^S,mag(:))*w(ixO^S,mom(:)),dim=ndim+1)&
+               /w(ixO^S,xi_)
+       else 
+         VdotB = sum(w(ixO^S,mag(:))*w(ixO^S,mom(:)),dim=ndim+1)&
+               /w(ixO^S,lfac_)
+       end if 
+    end if 
+    if(present(B2)) B2  = sum(w(ixO^S,mag(:))**2.0,dim=ndim+1)  
+
+  end subroutine srmhd_get_B2andVdotB
+
+ !> Calculate thermal pressure for enthalpy and density
+  subroutine srmhd_get_pressure_fromprimitive(ixI^L,ixO^L,w,pth)
+    use mod_global_parameters
+    implicit none
+    integer, intent(in)            :: ixI^L, ixO^L
+    double precision, intent(in)   :: w(ixI^S,nw)
+    double precision, intent(out)  :: pth(ixI^S)
+
+    double precision               :: rhoh(ixO^S)
+
+    rhoh  = w(ixO^S,xi_)/w(ixO^S,lfac_)**2.0d0
+    call srmhd_get_pressure_primitive_eos(ixI^L,ixO^L,w(ixO^S,rho_),rhoh,pth) 
+  end subroutine srmhd_get_pressure_fromprimitive
 
   !> Transform primitive variables into conservative ones
   subroutine srmhd_to_conserved(ixI^L,ixO^L,w,x)
-    ! made by Z. Meliani 10/02/2018 
     use mod_global_parameters
     integer, intent(in)                :: ixI^L, ixO^L
     double precision, intent(inout)    :: w(ixI^S, nw)
@@ -569,19 +352,19 @@ contains
     integer, dimension(ixO^S)          :: flag_error    
     character(len=30)                  :: subname_loc
  
-   
-    subname_loc= 'srmhd_to_conserved' 
     flag_error(ixO^S)=0
     where(w(ixO^S,rho_)<small_density)flag_error(ixO^S)=rho_
-
 
     sqrU(ixO^S)    = sum(w(ixO^S, mom(:))**2, dim=ndim+1)
     w(ixO^S,lfac_) = dsqrt(1.0d0+sqrU(ixO^S))
     sqrV=sqrU/w(ixO^S,lfac_)
+
     ! fill the auxiliary variable xi and density D
     call srmhd_get_enthalpy(ixO^L,w(ixO^S,rho_),w(ixO^S,p_),rhoh)
+
     ! with enthalpy w: xi= lfac^2 rhoh
-    w(ixO^S,xi_) = w(ixO^S,lfac_)**2.0D0*rhoh(ixO^S)
+    w(ixO^S,xi_) = w(ixO^S,lfac_)**2.0d0*rhoh(ixO^S)
+
     ! density: d = lfac * rho
     w(ixO^S,rho_)=w(ixO^S,lfac_)*w(ixO^S,rho_) 
     
@@ -590,12 +373,12 @@ contains
     ! s= (xi + B^2) * v - (v.B) * B
     ! re-use rhoh as rhoh=(xi+B^2)/lfac
     rhoh(ixO^S)= (w(ixO^S,xi_)+B2(ixO^S))/w(ixO^S,lfac_)
-    Loop_idirmom : do idir = 1, ndir
-       w(ixO^S, mom(idir)) = rhoh(ixO^S) * w(ixO^S, mom(idir))&
+    do idir = 1, ndir
+       w(ixO^S, mom(idir)) = rhoh(ixO^S) * w(ixO^S,mom(idir))&
                              -VdotB(ixO^S)*w(ixO^S,mag(idir))
-    end do Loop_idirmom
+    end do 
 
-    cond_energy : if (srmhd_energy) then
+    if (srmhd_energy) then
        ! re-use sqrU=v^2 B^2 - (v.B)^2
        sqrU(ixO^S) = B2(ixO^S)*sqrV(ixO^S)-VdotB(ixO^S)**2.0d0
        ! sqrU should positive
@@ -605,10 +388,10 @@ contains
        where(sqrV(ixO^S)<0.0d0) flag_error(ixO^S)=e_
        ! E = xi - p +(B^2+v^2 B^2 - (v.B)^2)/2- D
        w(ixO^S,e_)=sqrV(ixO^S) +0.5d0*(B2(ixO^S) + sqrU(ixO^S))
-      !if(.not.block%e_is_internal) w(ixO^S,e_)=w(ixO^S,e_) + x
-      if(type_divb==divb_glm2) w(ixO^S,e_)=w(ixO^S,e_) &
-                      + 0.5d0*w(ixO^S,psi_)**2
-    end if cond_energy
+       if(type_divb==divb_glm2) w(ixO^S,e_)=w(ixO^S,e_) &
+                                  + 0.5d0*w(ixO^S,psi_)**2
+    end if 
+    subname_loc= 'srmhd_to_conserved' 
     if (check_small_values) call srmhd_handle_small_values(.false., &
                                   w, x, ixI^L, ixO^L,trim(subname_loc),&
                                   flag_error=flag_error)
@@ -621,31 +404,30 @@ contains
     integer, intent(in)             :: ixI^L, ixO^L
     double precision, intent(inout) :: w(ixI^S, nw)
     double precision, intent(in)    :: x(ixI^S, 1:ndim)
-    double precision                :: inv_rho(ixI^S),B2(ixO^S),VdotB(ixO^S)
+    double precision                :: plocal(ixI^S),B2(ixO^S),VdotB(ixO^S)
     integer                         :: itr, idir
     character(len=30)               :: subname_loc
  
     subname_loc='srmhd_to_primitive'
-
     ! get auxiliary variables
     call srmhd_get_auxiliary(.true.,w,x,ixI^L,ixO^L,subname_loc)
+
     w(ixO^S,rho_) = w(ixO^S,d_)/w(ixO^S,lfac_)
     if (srmhd_energy) then
-      ! Calculate pressure = (gamma-1) * (e-ek-eb)
       if(.not.block%e_is_internal) then
-        call srmhd_get_pressure_fromprimitive(ixI^L,ixI^L,w,inv_rho)
-        w(ixO^S,p_)   = inv_rho(ixO^S)
+          call srmhd_get_pressure_fromprimitive(ixI^L,ixI^L,w,plocal)
+          w(ixO^S,p_)   = plocal(ixO^S)
       else
-       w(ixO^S,p_)   = gamma_1*w(ixO^S, e_)
+          w(ixO^S,p_)   = gamma_1*w(ixO^S, e_)
       end if
     end if
 
     call srmhd_get_B2andVdotB(ixI^L,ixO^L,w,.true.,B2,VdotB)
-    Loop_idir : do idir=1,ndir
-     w(ixO^S,mom(idir)) = w(ixO^S,lfac_)*(w(ixO^S,mom(idir))&
+    do idir=1,ndir
+       w(ixO^S,mom(idir)) = w(ixO^S,lfac_)*(w(ixO^S,mom(idir))&
                       +VdotB*w(ixO^S,mag(idir)))&
                       /(w(ixO^S,xi_)+B2)
-    end do Loop_idir
+    end do 
 
     if (check_small_values) call srmhd_handle_small_values(.true., w, x&
                                  , ixI^L, ixO^L,trim(subname_loc))
@@ -697,29 +479,8 @@ contains
     end if
   end subroutine srmhd_handle_small_values
 
-
-
-
- !> Calculate thermal pressure for enthalpy and density
-  subroutine srmhd_get_pressure_fromprimitive(ixI^L,ixO^L,w,pth)
-    ! made by Z. Meliani 10/02/2018 
-    use mod_global_parameters
-    implicit none
-    integer, intent(in)            :: ixI^L, ixO^L
-    double precision, intent(in)   :: w(ixI^S,nw)
-    double precision, intent(out)  :: pth(ixI^S)
-
-    double precision               :: rhoh(ixO^S)
-
-    rhoh  = w(ixO^S,xi_)/w(ixO^S,lfac_)**2.0d0
-    call srmhd_get_pressure_primitive_eos(ixI^L,ixO^L,w(ixO^S,rho_),rhoh,pth) 
-    !pth(ixO^S) =  w(ixO^S,p_)
-  end subroutine srmhd_get_pressure_fromprimitive
-
-
-  !> Calculate thermal pressure=(gamma-1)*(e-0.5*m**2/rho-b**2/2) within ixO^L
+  !> Calculate thermal pressure within ixO^L
   subroutine srmhd_get_pthermal(w,x,ixI^L,ixO^L,pth)
-    ! made by Z. Meliani 10/02/2018 
     use mod_global_parameters
     implicit none
 
@@ -730,16 +491,13 @@ contains
 
     double precision             :: rho(ixO^S),rhoh(ixO^S)
 
-    rho        = w(ixO^S,d_)/w(ixO^S,lfac_)
+    rho  = w(ixO^S,d_)/w(ixO^S,lfac_)
     rhoh =w(ixO^S,xi_)/w(ixO^S,lfac_)**2.0d0
     call srmhd_get_pthermal_eos(ixI^L,ixO^L,x,rho,rhoh,w(ixO^S,e_),pth)
   end subroutine srmhd_get_pthermal
 
-
- !> Calculate the square of the thermal sound speed csound2 within ixO^L.
-  !> csound2=gamm*p/rho
+  !> Calculate the square of the thermal sound speed csound2 within ixO^L.
   subroutine srmhd_get_csound2_prim(w,x,ixI^L,ixO^L,csound2)
-    ! made by Z. Meliani 13/02/2018 
     use mod_global_parameters
     implicit none
     integer, intent(in)               :: ixI^L, ixO^L
@@ -751,7 +509,6 @@ contains
 
     
     rhoh=w(ixO^S,xi_)/w(ixO^S,lfac_)**2.0d0
-    
     call srmhd_get_csound2_prim_eos(ixI^L,ixO^L,x,w(ixO^S,rho_),&
                                     rhoh,w(ixO^S,p_),csound2)
   end subroutine srmhd_get_csound2_prim
@@ -766,7 +523,7 @@ contains
     if (srmhd_energy) then
       if(.not.block%e_is_internal) &
         w(ixO^S, e_) = w(ixO^S, e_) - srmhd_kin_en_primitive(w, ixI^L, ixO^L) &
-              - srmhd_mag_en_primitive(w, ixI^L, ixO^L)
+                                    - srmhd_mag_en_primitive(w, ixI^L, ixO^L)
       w(ixO^S, e_) = gamma_1* w(ixO^S, rho_)**(1.0d0 - srmhd_gamma) * &
             w(ixO^S, e_)
     else
@@ -794,7 +551,6 @@ contains
 
   !> Calculate v vector
   subroutine srmhd_get_v(w,x,ixI^L,ixO^L,v,B2,VdotB)
-    ! made by Z. Meliani 13/02/2018 
     use mod_global_parameters
 
     integer, intent(in)           :: ixI^L, ixO^L
@@ -802,31 +558,25 @@ contains
     double precision, intent(out) :: v(ixI^S,1:ndir)
 
     double precision, optional, intent(in)  :: VdotB(ixO^S),B2(ixO^S)
-    double precision                        :: sub_VdotB(ixO^S)&
-                                              ,sub_B2(ixO^S)
+    double precision  :: sub_VdotB(ixO^S),sub_B2(ixO^S)
     integer :: idir
 
-
-
-    is_B2_in : if(present(B2)) then
-     Loop_idir_b_v1 : do idir=1,ndir
-      v(ixO^S,idir) = (w(ixO^S, mom(idir)) + VdotB*w(ixO^S,mag(idir)))&
+    if(present(B2)) then
+       do idir=1,ndir
+          v(ixO^S,idir) = (w(ixO^S, mom(idir)) + VdotB*w(ixO^S,mag(idir)))&
                       /(w(ixO^S,xi_)+B2)
-     end do Loop_idir_b_v1
-    else  is_B2_in
+       end do
+    else  
      call srmhd_get_B2andVdotB(ixI^L,ixO^L,w,.true.,B2=sub_B2,VdotB=sub_VdotB)
-     Loop_idir_b_v2: do idir=1,ndir
-      v(ixO^S,idir) = (w(ixO^S, mom(idir))+sub_VdotB*w(ixO^S,mag(idir)))&
+     do idir=1,ndir
+         v(ixO^S,idir) = (w(ixO^S, mom(idir))+sub_VdotB*w(ixO^S,mag(idir)))&
                       /(w(ixO^S,xi_)+sub_B2)
-     end do Loop_idir_b_v2
-    end if is_B2_in
+     end do 
+    end if 
   end subroutine srmhd_get_v
-
-
 
   !> Calculate v component
   subroutine srmhd_get_v_idim(w,ixI^L,ixO^L,idim,v_idim)
-    ! made by Z. Meliani 10/02/2018 
     use mod_global_parameters
 
     integer, intent(in)                    :: ixI^L, ixO^L, idim
@@ -835,14 +585,13 @@ contains
 
     double precision                       :: sub_VdotB(ixO^S),sub_B2(ixO^S)
 
-     call srmhd_get_B2andVdotB(ixI^L,ixO^L,w,.true.,B2=sub_B2,VdotB=sub_VdotB)
-     v_idim(ixO^S) = (w(ixO^S, mom(idim)) + sub_VdotB*w(ixO^S,mag(idim)))&
+    call srmhd_get_B2andVdotB(ixI^L,ixO^L,w,.true.,B2=sub_B2,VdotB=sub_VdotB)
+    v_idim(ixO^S) = (w(ixO^S, mom(idim)) + sub_VdotB*w(ixO^S,mag(idim)))&
                       /(w(ixO^S,xi_)+sub_B2)
   end subroutine srmhd_get_v_idim
 
-  !> Calculate v component
+  !> Calculate v component (different interface, includes location vector x)
   subroutine srmhd_get_v_idim_loc(w,x,ixI^L,ixO^L,idim,v_idim,B2,VdotB)
-    ! made by Z. Meliani 13/02/2018 
     use mod_global_parameters
 
     integer, intent(in)                    :: ixI^L, ixO^L, idim
@@ -862,9 +611,8 @@ contains
     end if
   end subroutine srmhd_get_v_idim_loc
 
- !> Calculate v^2
+  !> Calculate v^2
   subroutine srmhd_get_v2(w,x,ixI^L,ixO^L,v2,B2,VdotB)
-    ! made by Z. Meliani 13/02/2018 
     use mod_global_parameters
 
     integer, intent(in)           :: ixI^L, ixO^L
@@ -877,22 +625,22 @@ contains
     integer :: idir
 
     if(present(B2)) then
-     Loop_idir_B2: do idir=1,ndir
+     do idir=1,ndir
        v_num(ixO^S,idir)=w(ixO^S, mom(idir)) + VdotB*w(ixO^S,mag(idir))
-     end do  Loop_idir_B2
+     end do 
      v2(ixO^S) = sum(v_num(ixO^S, 1:ndir)**2.0 ,dim=ndim+1)&
                       /(w(ixO^S,xi_)+B2)**2.0
     else 
      call srmhd_get_B2andVdotB(ixI^L,ixO^L,w,.true.,B2=sub_B2,VdotB=sub_VdotB)
-     Loop_idir_noB2: do idir=1,ndir
+     do idir=1,ndir
        v_num(ixO^S,idir)=w(ixO^S, mom(idir)) + sub_VdotB*w(ixO^S,mag(idir))
-     end do  Loop_idir_noB2
-     
+     end do 
      v2(ixO^S) = sum(v_num(ixO^S, :)**2.0 ,dim=ndim+1)&
                       /(w(ixO^S,xi_)+sub_B2)**2.0
     end if
   end subroutine srmhd_get_v2
 
+  !> maximal speed using gammie recipe
   subroutine srmhd_get_cmax_gammie(ixI^L,ixO^L,idim,x,w,rhoh,B2,&
                                    VdotB,calfven,vidim,csound2,cmax&
                                    ,patch_gammie,from_cbound,cmin)
@@ -964,7 +712,6 @@ contains
 
   end subroutine srmhd_get_cmax_gammie
 
-
   !> Calculate cmax_idim using gammie method within ixO^L
   subroutine srmhd_get_cmax(w,x,ixI^L,ixO^L,idim,cmax)
     ! made by Z. Meliani 13/02/2018 
@@ -987,22 +734,6 @@ contains
                                VdotB=VdotB,calfven=calfven,vidim=vidim,&
                                csound2=csound2,cmax=cmax)
 
-
-!    A = cmax(ixO^S)+B(ixO^S)-cmax(ixO^S)*B(ixO^S)
-!    call srmhd_get_v_idim(w,x,ixI^L,ixO^L,idim,vidim,B2=B2,VdotB=C)
-!    ! use B to save vidim**2
-!    B(ixO^S)=vidim(ixO^S)**2.0d0
-!    cond_onedir: if(ndir==1)then
-!     cmax(ixO^S)=(dabs(vidim(ixO^S))+dsqrt(A))/(1.0d0+dsqrt(A+B))
-!    else cond_onedir
-!   
-!     call srmhd_get_v2(w,x,ixI^L,ixO^L,v2,B2=B2,VdotB=C)
-!     cmax(ixO^S)=(dabs(vidim(ixO^S))*(1.0d0-A)&
-!                  +dsqrt(A*(1.0d0-v2(ixO^S))*((1.0d0-v2(ixO^S)*A)&
-!                         -B(ixO^S)*(1.0d0-A))))&
-!                 /( 1.0d0-v2(ixO^S)*A)
-!    end if cond_onedir
-    
   end subroutine srmhd_get_cmax
 
   !> Estimating bounds for the minimum and maximum signal velocities
@@ -1101,8 +832,8 @@ contains
       end if
     end if
   end subroutine srmhd_get_cbounds
-    ! made by Z. Meliani 10/02/2018 
-  !> Calculate the Aflven speed
+
+  !> Calculate the Alfven speed
   subroutine srmhd_get_calfven2(ixI^L,ixO^L,x,w,conserve,calfven,rhoh,B2)
    use mod_global_parameters
    implicit none
@@ -1123,94 +854,8 @@ contains
    end if
   end subroutine srmhd_get_calfven2
 
-
-  !> Calculate fast magnetosonic wave speed
-!  subroutine srmhd_get_cfast(w,x,ixI^L,ixO^L,idim,csound)
-!    use mod_global_parameters
-
-!    integer, intent(in)          :: ixI^L, ixO^L, idim
-!    double precision, intent(in) :: w(ixI^S, nw), x(ixI^S,1:ndim)
-!    double precision, intent(out):: csound(ixI^S)
-!    double precision :: cfast2(ixI^S), AvMinCs2(ixI^S), b2(ixI^S), kmax
-!    double precision :: inv_rho(ixO^S)
-
-!    inv_rho=1.d0/w(ixO^S,rho_)
-
-!    call srmhd_get_csound2(w,x,ixI^L,ixO^L,csound)
-!    ! store |B|^2 in v
-!    b2(ixO^S)        = srmhd_mag_en_all(w,ixI^L,ixO^L)
-!    cfast2(ixO^S)   = b2(ixO^S) * inv_rho+csound(ixO^S)
-!    AvMinCs2(ixO^S) = cfast2(ixO^S)**2-4.0d0*csound(ixO^S) &
-!         * srmhd_mag_i_all(w,ixI^L,ixO^L,idim)**2 &
-!         * inv_rho
-
-!    where(AvMinCs2(ixO^S)<zero)
-!       AvMinCs2(ixO^S)=zero
-!    end where
-
-!    AvMinCs2(ixO^S)=sqrt(AvMinCs2(ixO^S))
-!
-!    if (.not. MHD_Hall) then
-!       csound(ixO^S) = sqrt(half*(cfast2(ixO^S)+AvMinCs2(ixO^S)))
-!    else
-!       ! take the Hall velocity into account:
-!       ! most simple estimate, high k limit:
-!       ! largest wavenumber supported by grid: Nyquist (in practise can reduce by some factor)
-!       kmax = dpi/min({dxlevel(^D)},bigdouble)*half
-!       csound(ixO^S) = max(sqrt(half*(cfast2(ixO^S)+AvMinCs2(ixO^S))), &
-!            srmhd_etah * sqrt(b2(ixO^S))*inv_rho*kmax)
-!    end if
-!
-!  end subroutine srmhd_get_csound
-
-  !> Calculate fast magnetosonic wave speed
-  subroutine srmhd_get_csound_prim(w,x,ixI^L,ixO^L,idim,csound)
-    ! made by Z. Meliani 10/02/2018 
-    use mod_global_parameters
-
-    integer, intent(in)          :: ixI^L, ixO^L, idim
-    double precision, intent(in) :: w(ixI^S, nw), x(ixI^S,1:ndim)
-    double precision, intent(out):: csound(ixI^S)
-    double precision :: cfast2(ixI^S), AvMinCs2(ixI^S), b2(ixI^S), kmax
-    double precision :: inv_rho(ixO^S)
-
-    inv_rho=1.d0/w(ixO^S,rho_)
-
-    if(srmhd_energy) then
-      csound(ixO^S)=dsqrt(srmhd_gamma*w(ixO^S,p_)*inv_rho)
-    else
-      csound(ixO^S)=dsqrt(srmhd_gamma*srmhd_adiab*w(ixO^S,rho_)**gamma_1)
-    end if
-!    ! store |B|^2 in v
-!    b2(ixO^S)        = srmhd_mag_en_all(w,ixI^L,ixO^L)
-!    cfast2(ixO^S)   = b2(ixO^S) * inv_rho+csound(ixO^S)
-!    AvMinCs2(ixO^S) = cfast2(ixO^S)**2-4.0d0*csound(ixO^S) &
-!         * srmhd_mag_i_all(w,ixI^L,ixO^L,idim)**2 &
-!         * inv_rho
-
-!    where(AvMinCs2(ixO^S)<zero)
-!       AvMinCs2(ixO^S)=zero
-!    end where
-
-!    AvMinCs2(ixO^S)=sqrt(AvMinCs2(ixO^S))
-!
-!    if (.not. MHD_Hall) then
-!       csound(ixO^S) = sqrt(half*(cfast2(ixO^S)+AvMinCs2(ixO^S)))
-!    else
-!       ! take the Hall velocity into account:
-!       ! most simple estimate, high k limit:
-!       ! largest wavenumber supported by grid: Nyquist (in practise can reduce by some factor)
-!       kmax = dpi/min({dxlevel(^D)},bigdouble)*half
-!       csound(ixO^S) = max(sqrt(half*(cfast2(ixO^S)+AvMinCs2(ixO^S))), &
-!            srmhd_etah * sqrt(b2(ixO^S))*inv_rho*kmax)
-!    end if
-!
-  end subroutine srmhd_get_csound_prim
-
-
- !> Calculate magnetic pressure within ixO^L including magnetic pressure
+  !> Calculate magnetic pressure within ixO^L 
   subroutine srmhd_get_p_mag(w,ixI^L,ixO^L,pmag)
-    ! made by Z. Meliani 10/02/2018 
     use mod_global_parameters
 
     integer, intent(in)             :: ixI^L, ixO^L
@@ -1224,10 +869,27 @@ contains
 
   end subroutine srmhd_get_p_mag
 
+  !> Calculate sound speed
+  subroutine srmhd_get_csound_prim(w,x,ixI^L,ixO^L,idim,csound)
+    use mod_global_parameters
+
+    integer, intent(in)          :: ixI^L, ixO^L, idim
+    double precision, intent(in) :: w(ixI^S, nw), x(ixI^S,1:ndim)
+    double precision, intent(out):: csound(ixI^S)
+    double precision :: inv_rho(ixO^S)
+
+    inv_rho=1.d0/w(ixO^S,rho_)
+
+    if(srmhd_energy) then
+      csound(ixO^S)=dsqrt(srmhd_gamma*w(ixO^S,p_)*inv_rho)
+    else
+      csound(ixO^S)=dsqrt(srmhd_gamma*srmhd_adiab*w(ixO^S,rho_)**gamma_1)
+    end if
+
+  end subroutine srmhd_get_csound_prim
+
   !> Calculate the square of the thermal sound speed csound2 within ixO^L.
-  !> csound2=gamma*p/rho
   subroutine srmhd_get_csound2(w,x,ixI^L,ixO^L,rhoh,csound2)
-    ! made by Z. Meliani 13/02/2018 
     use mod_global_parameters
     integer, intent(in)             :: ixI^L, ixO^L
     double precision, intent(in)    :: w(ixI^S,nw),rhoh(ixO^S)
@@ -1242,13 +904,11 @@ contains
     else
       csound2(ixO^S)=srmhd_gamma*srmhd_adiab*rho(ixO^S)**gamma_1
     end if
+
   end subroutine srmhd_get_csound2
-
-
 
   !> Calculate total pressure within ixO^L including magnetic pressure
   subroutine srmhd_get_p_total(w,x,ixI^L,ixO^L,p,B2,VdotB)
-    ! made by Z. Meliani 10/02/2018 
     use mod_global_parameters
     implicit none
 
@@ -1259,15 +919,18 @@ contains
     double precision, optional, intent(in) :: B2(ixO^S),VdotB(ixO^S)
 
     double precision                :: pmag(ixI^S)
+
     call srmhd_get_pthermal(w,x,ixI^L,ixO^L,p)
     call srmhd_get_pmag(w,x,ixI^L,ixO^L,pmag,B2=B2,VdotB=VdotB)
     p(ixO^S) = p(ixO^S) + pmag(ixO^S)
+
   end subroutine srmhd_get_p_total
 
+  !> compute magnetic pressure (different interface as get_p_mag)
   subroutine srmhd_get_pmag(w,x,ixI^L,ixO^L,pmag,B2,VdotB)
-    ! made by Z. Meliani 10/02/2018 
-   use mod_global_parameters
-   implicit none
+    use mod_global_parameters
+    implicit none
+
     integer, intent(in)                    :: ixI^L, ixO^L
     double precision, intent(in)           :: w(ixI^S,nw)
     double precision, intent(in)           :: x(ixI^S,1:ndim)
@@ -1276,41 +939,16 @@ contains
 
     double precision, dimension(ixO^S)     :: sub_B2,sub_VdotB
 
-    is_presentB2 : if(present(B2)) then
-     pmag(ixO^S) = 0.5d0*(VdotB(ixO^S)**2.0d0  &
+    if(present(B2)) then
+       pmag(ixO^S) = 0.5d0*(VdotB(ixO^S)**2.0d0  &
                        + B2(ixO^S)/w(ixO^S,lfac_)**2.0d0)
-    else  is_presentB2
-     call srmhd_get_B2andVdotB(ixI^L,ixO^L,w,.true.,B2=sub_B2,VdotB=sub_VdotB)
-     pmag(ixO^S) = 0.5d0*(sub_VdotB(ixO^S)**2.0d0  &
+    else 
+       call srmhd_get_B2andVdotB(ixI^L,ixO^L,w,.true.,B2=sub_B2,VdotB=sub_VdotB)
+       pmag(ixO^S) = 0.5d0*(sub_VdotB(ixO^S)**2.0d0  &
                        + sub_B2(ixO^S)/w(ixO^S,lfac_)**2.0d0)
-    end if is_presentB2
+    end if 
   end subroutine srmhd_get_pmag
 
-  !> Calculate B2 and/ot VdotB in ixO^S from conserve or primitive variables
-  subroutine srmhd_get_B2andVdotB(ixI^L,ixO^L,w,wconserve,B2,VdotB)
-    ! made by Z. Meliani 13/02/2018 
-    use mod_global_parameters
-    implicit none
-    integer, intent(in)                      :: ixI^L, ixO^L
-    ! conservative or primitive w
-    double precision, intent(in)             :: w(ixI^S,nw) 
-    logical, intent(in)                      :: wconserve  
-    double precision,optional, intent(inout) :: B2(ixO^S),VdotB(ixO^S)
-
-    is_VdotB_present : if(present(VdotB))then
-     is_conserve : if(wconserve)then
-       VdotB = sum(w(ixO^S,mag(:))*w(ixO^S,mom(:)),dim=ndim+1)&
-               /w(ixO^S,xi_)
-     else is_conserve
-       VdotB = sum(w(ixO^S,mag(:))*w(ixO^S,mom(:)),dim=ndim+1)&
-               /w(ixO^S,lfac_)
-     end if is_conserve
-    end if is_VdotB_present
-    if(present(B2))B2    = sum(w(ixO^S,mag(:))**2.0,dim=ndim+1)  
-
-  end subroutine srmhd_get_B2andVdotB
-
-  
   !> Calculate fluxes within ixO^L.
   subroutine srmhd_get_flux(wC,wP,x,ixI^L,ixO^L,idim,f)
     ! made by Z. Meliani 10/02/2018 
@@ -1330,7 +968,7 @@ contains
     integer                      :: idirmin, iw, idir
 
 
-    call srmhd_get_B2andVdotB(ixI^L,ixO^L,wp,.false.,B2=B2,VdotB=VdotB)
+    call srmhd_get_B2andVdotB(ixI^L,ixO^L,wP,.false.,B2=B2,VdotB=VdotB)
     call srmhd_get_p_total(wC,x,ixI^L,ixO^L,ptotal,B2=B2,VdotB=VdotB)
     call srmhd_get_v(wC,x,ixI^L,ixO^L,v,B2=B2,VdotB=VdotB)
     ! Get flux of density
@@ -1404,16 +1042,13 @@ contains
   subroutine srmhd_add_source(qdt,ixI^L,ixO^L,wCT,w,x,qsourcesplit,active)
     ! made by Z. Meliani 10/02/2018 
     use mod_global_parameters
-    use mod_radiative_cooling, only: radiative_cooling_add_source
-    use mod_viscosity, only: viscosity_add_source
-    use mod_gravity, only: gravity_add_source
 
     integer, intent(in)             :: ixI^L, ixO^L
     double precision, intent(in)    :: qdt
     double precision, intent(in)    :: wCT(ixI^S,1:nw), x(ixI^S,1:ndim)
     double precision, intent(inout) :: w(ixI^S,1:nw)
     logical, intent(in)             :: qsourcesplit
-    logical, intent(inout)            :: active
+    logical, intent(inout)          :: active
 
     if (.not. qsourcesplit) then
       ! Source for solving internal energy
@@ -1421,26 +1056,9 @@ contains
         active = .true.
         call internal_energy_add_source(qdt,ixI^L,ixO^L,wCT,w,x)
       endif
+    endif
 
-      ! Source for B0 splitting
-!      if (B0field) then
-!        active = .true.
-!        call add_source_B0split(qdt,ixI^L,ixO^L,wCT,w,x)
-!      end if
-
-      ! Sources for resistivity in eqs. for e, B1, B2 and B3
-!      if (abs(srmhd_eta)>smalldouble)then
-!        active = .true.
-!        call add_source_res2(qdt,ixI^L,ixO^L,wCT,w,x)
-!      end if
-
-!      if (srmhd_eta_hyper>0.d0)then
-!        active = .true.
-!        call add_source_hyperres(qdt,ixI^L,ixO^L,wCT,w,x)
-!      end if
-    end if
-
-      {^NOONED
+    {^NOONED
     if(.not.source_split_divb .and. .not.qsourcesplit .and. istep==nstep) then
       ! Sources related to div B
       select case (type_divb)
@@ -1452,9 +1070,6 @@ contains
       case (divb_glm2)
         active = .true.
         call add_source_glm2(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
-      case (divb_powel)
-        active = .true.
-        call add_source_powel(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
       case (divb_janhunen)
         active = .true.
         call add_source_janhunen(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
@@ -1465,10 +1080,6 @@ contains
         active = .true.
         call add_source_linde(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
         call add_source_janhunen(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
-      case (divb_lindepowel)
-        active = .true.
-        call add_source_linde(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
-        call add_source_powel(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
       case (divb_lindeglm)
         active = .true.
         call add_source_linde(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
@@ -1487,9 +1098,6 @@ contains
       case (divb_glm2)
         active = .true.
         call add_source_glm2(dt,ixI^L,ixO^L,pso(saveigrid)%w,w,x)
-      case (divb_powel)
-        active = .true.
-        call add_source_powel(qdt,ixI^L,ixO^L,wCT,w,x)
       case (divb_janhunen)
         active = .true.
         call add_source_janhunen(qdt,ixI^L,ixO^L,wCT,w,x)
@@ -1500,10 +1108,6 @@ contains
         active = .true.
         call add_source_linde(qdt,ixI^L,ixO^L,wCT,w,x)
         call add_source_janhunen(qdt,ixI^L,ixO^L,wCT,w,x)
-      case (divb_lindepowel)
-        active = .true.
-        call add_source_linde(qdt,ixI^L,ixO^L,wCT,w,x)
-        call add_source_powel(qdt,ixI^L,ixO^L,wCT,w,x)
       case (divb_lindeglm)
         active = .true.
         call add_source_linde(qdt,ixI^L,ixO^L,wCT,w,x)
@@ -1514,26 +1118,11 @@ contains
     end if
     }
 
-!    if(srmhd_radiative_cooling) then
-!      call radiative_cooling_add_source(qdt,ixI^L,ixO^L,wCT,&
-!           w,x,qsourcesplit,active)
-!    end if
-
-!    if(srmhd_viscosity) then
-!      call viscosity_add_source(qdt,ixI^L,ixO^L,wCT,&
-!           w,x,srmhd_energy,qsourcesplit,active)
-!    end if
-
-    if(srmhd_gravity) then
-      call gravity_add_source(qdt,ixI^L,ixO^L,wCT,&
-           w,x,srmhd_energy,qsourcesplit,active)
-    end if
     call srmhd_get_auxiliary(.true.,w,x,ixI^L,ixO^L,'srmhd_add_source')
 
   end subroutine srmhd_add_source
 
   subroutine internal_energy_add_source(qdt,ixI^L,ixO^L,wCT,w,x)
-    ! made by Z. Meliani 10/02/2018 
     use mod_global_parameters
     use mod_geometry
 
@@ -1549,8 +1138,6 @@ contains
     w(ixO^S,e_)=w(ixO^S,e_)-qdt*pth(ixO^S)*divv(ixO^S)
 
   end subroutine internal_energy_add_source
-
-
 
   subroutine add_source_glm1(qdt,ixI^L,ixO^L,wCT,w,x)
     ! Add divB related sources to w within ixO
@@ -1666,42 +1253,6 @@ contains
 
   end subroutine add_source_glm2
 
-  !> Add divB related sources to w within ixO corresponding to Powel
-  subroutine add_source_powel(qdt,ixI^L,ixO^L,wCT,w,x)
-    use mod_global_parameters
-
-    integer, intent(in)             :: ixI^L, ixO^L
-    double precision, intent(in)    :: qdt,   wCT(ixI^S,1:nw), x(ixI^S,1:ndim)
-    double precision, intent(inout) :: w(ixI^S,1:nw)
-    double precision                :: divb(ixI^S),v(ixI^S,1:ndir)
-    integer                         :: idir
-
-    ! We calculate now div B
-    call get_divb(wCT,ixI^L,ixO^L,divb)
-
-    ! calculate velocity
-    call srmhd_get_v(wCT,x,ixI^L,ixO^L,v)
-
-    if (srmhd_energy .and. .not.block%e_is_internal) then
-      ! e = e - qdt (v . b) * div b
-      w(ixO^S,e_)=w(ixO^S,e_)-&
-           qdt*sum(v(ixO^S,:)*wCT(ixO^S,mag(:)),dim=ndim+1)*divb(ixO^S)
-    end if
-
-    ! b = b - qdt v * div b
-    do idir=1,ndir
-      w(ixO^S,mag(idir))=w(ixO^S,mag(idir))-qdt*v(ixO^S,idir)*divb(ixO^S)
-    end do
-
-    ! m = m - qdt b div b
-    do idir=1,ndir
-      w(ixO^S,mom(idir))=w(ixO^S,mom(idir))-qdt*srmhd_mag_i_all(w,ixI^L,ixO^L,idir)*divb(ixO^S)
-    end do
-
-    if (check_small_values) call srmhd_handle_small_values(.false.,w,x,ixI^L,ixO^L,'add_source_powel')
-
-  end subroutine add_source_powel
-
   subroutine add_source_janhunen(qdt,ixI^L,ixO^L,wCT,w,x)
     ! Add divB related sources to w within ixO
     ! corresponding to Janhunen, just the term in the induction equation.
@@ -1788,11 +1339,6 @@ contains
        end if
 
        w(ixp^S,mag(idim))=w(ixp^S,mag(idim))+graddivb(ixp^S)
-
-       if (srmhd_energy .and. typedivbdiff=='all' .and. .not.block%e_is_internal) then
-         ! e += B_idim*eta*grad_idim(divb)
-         w(ixp^S,e_)=w(ixp^S,e_)+wCT(ixp^S,mag(idim))*graddivb(ixp^S)
-       end if
     end do
 
     if (check_small_values) call srmhd_handle_small_values(.false.,w,x,ixI^L,ixO^L,'add_source_linde')
@@ -1874,32 +1420,16 @@ contains
 
   end subroutine get_current
 
-  !> If resistivity is not zero, check diffusion time limit for dt
   subroutine srmhd_get_dt(w,ixI^L,ixO^L,dtnew,dx^D,x)
     use mod_global_parameters
     use mod_usr_methods
-    use mod_radiative_cooling, only: cooling_get_dt
-    use mod_viscosity, only: viscosity_get_dt
-    use mod_gravity, only: gravity_get_dt
-
     integer, intent(in)             :: ixI^L, ixO^L
     double precision, intent(inout) :: dtnew
     double precision, intent(in)    :: dx^D
     double precision, intent(in)    :: w(ixI^S,1:nw)
     double precision, intent(in)    :: x(ixI^S,1:ndim)
 
-    integer                       :: idirmin,idim
-    double precision              :: dxarr(ndim)
-    double precision              :: current(ixI^S,7-2*ndir:3),eta(ixI^S)
-
     dtnew = bigdouble
-
-    ^D&dxarr(^D)=dx^D;
-
-
-    if(srmhd_gravity) then
-      call gravity_get_dt(w,ixI^L,ixO^L,dtnew,dx^D,x)
-    end if
 
   end subroutine srmhd_get_dt
 
@@ -2042,11 +1572,8 @@ contains
     double precision, intent(in)  :: w(ixI^S, nw)
     double precision              :: mge(ixO^S)
 
-    if (B0field) then
-      mge = sum((w(ixO^S, mag(:))+block%B0(ixO^S,:,block%iw0))**2, dim=ndim+1)
-    else
-      mge = sum(w(ixO^S, mag(:))**2, dim=ndim+1)
-    end if
+    mge = sum(w(ixO^S, mag(:))**2, dim=ndim+1)
+
   end function srmhd_mag_en_all
 
   !> Compute full magnetic field by direction
@@ -2056,11 +1583,8 @@ contains
     double precision, intent(in)  :: w(ixI^S, nw)
     double precision              :: mgf(ixO^S)
 
-    if (B0field) then
-      mgf = w(ixO^S, mag(idir))+block%B0(ixO^S,idir,block%iw0)
-    else
-      mgf = w(ixO^S, mag(idir))
-    end if
+    mgf = w(ixO^S, mag(idir))
+
   end function srmhd_mag_i_all
 
   !> Compute evolving magnetic energy from primitive
@@ -2076,9 +1600,8 @@ contains
           +sum(w(ixO^S, mag(:))*w(ixO^S, mom(:))))/w(ixO^S,lfac_)
   end function srmhd_mag_en_primitive
 
-  !> compute kinetic energy from primitive
+  !> compute kinetic energy from primitive variables
   function srmhd_kin_en_primitive(w, ixI^L, ixO^L, inv_rho) result(ke)
-    ! made by Z. Meliani 10/02/2018 
     use mod_global_parameters, only: nw, ndim
     integer, intent(in)           :: ixI^L, ixO^L
     double precision, intent(in)  :: w(ixI^S, nw)
@@ -2091,60 +1614,6 @@ contains
        ke = (w(ixO^S,xi_)-1.0d0) / w(ixO^S, rho_)
     end if
   end function srmhd_kin_en_primitive
-
-!  !>get Hall speed
-!  subroutine srmhd_getv_Hall(w,x,ixI^L,ixO^L,vHall)
-!    use mod_global_parameters
-
-!    integer, intent(in)             :: ixI^L, ixO^L
-!    double precision, intent(in)    :: w(ixI^S,nw)
-!    double precision, intent(in)    :: x(ixI^S,1:ndim)
-!    double precision, intent(inout) :: vHall(ixI^S,1:3)
-
-!    integer          :: idir, idirmin
-!    double precision :: current(ixI^S,7-2*ndir:3)
-
-!    ! Calculate current density and idirmin
-!    call get_current(w,ixI^L,ixO^L,idirmin,current)
-!    vHall(ixO^S,1:3) = zero
-!    vHall(ixO^S,idirmin:3) = - srmhd_etah*current(ixO^S,idirmin:3)
-!    do idir = idirmin, 3
-!       vHall(ixO^S,idir) = vHall(ixO^S,idir)/w(ixO^S,rho_)
-!    end do
-
-!  end subroutine srmhd_getv_Hall
-
-!  subroutine srmhd_getdt_Hall(w,x,ixI^L,ixO^L,dx^D,dthall)
-!    use mod_global_parameters
-
-!    integer, intent(in) :: ixI^L, ixO^L
-!    double precision, intent(in)    :: dx^D
-!    double precision, intent(in)    :: w(ixI^S,1:nw)
-!    double precision, intent(in)    :: x(ixI^S,1:ndim)
-!    double precision, intent(out)   :: dthall
-!    !.. local ..
-!    double precision :: dxarr(ndim)
-!    double precision :: bmag(ixI^S)
-
-!    dthall=bigdouble
-
-!    ! because we have that in cmax now:
-!    return
-
-!    ^D&dxarr(^D)=dx^D;
-
-!    if (.not. B0field) then
-!       bmag(ixO^S)=sqrt(sum(w(ixO^S,mag(:))**2, dim=ndim+1))
-!       bmag(ixO^S)=sqrt(sum((w(ixO^S,mag(:)) + block%B0(ixO^S,1:ndir,block%iw0))**2))
-!    end if
-
-!    if(slab) then
-!      dthall=dtdiffpar*minval(dxarr(1:ndim))**2.0d0/(srmhd_etah*maxval(bmag(ixO^S)/w(ixO^S,rho_)))
-!    else
-!      dthall=dtdiffpar*minval(block%ds(ixO^S,1:ndim))**2.0d0/(srmhd_etah*maxval(bmag(ixO^S)/w(ixO^S,rho_)))
-!    end if
-
-!  end subroutine srmhd_getdt_Hall
 
   !> This implements eq. (42) in Dedner et al. 2002 JcP 175
   !> Gives the Riemann solution on the interface
@@ -2589,9 +2058,8 @@ contains
 
    end subroutine fixdivB_boundary
    
-   !> subtroutine srmhd_get_auxiliary calcule using srmhd_con2prim to calculate the enthalpy and the lorentz factor
+   !> subroutine using srmhd_con2prim to calculate the enthalpy and the lorentz factor
    subroutine srmhd_get_auxiliary(clipping,w,x,ixI^L,ixO^L,subname)
-    ! made by Z. Meliani 10/02/2018 
     use mod_global_parameters
     use mod_srmhd_con2prim
     implicit none
@@ -2642,10 +2110,9 @@ contains
     double precision                :: lfac(ixO^S)
     integer                         :: idir
 
-
     lfac= 1.0d0/dsqrt(1.0d0-sum(vtou(ixO^S,1:ndir)**2.0,dim=ndim+1))
-    Loop_idir: do idir=1,ndir
-     vtou(ixO^S,idir)=lfac(ixO^S)*vtou(ixO^S,idir)
-    end do Loop_idir  
+    do idir=1,ndir
+       vtou(ixO^S,idir)=lfac(ixO^S)*vtou(ixO^S,idir)
+    end do   
    end subroutine srmhd_get_4u_from_3v
 end module mod_srmhd_phys

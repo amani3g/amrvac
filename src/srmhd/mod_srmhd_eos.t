@@ -2,14 +2,11 @@ module mod_srmhd_eos
   use mod_global_parameters
   use mod_srmhd_parameters
   implicit none
-  !> gamma minus one and its inverse
-  double precision, save :: gamma_1, inv_gamma_1,gamma_to_gamma_1
 
  contains
 
-    !>compute the enthalpy
+  !>compute the enthalpy
   subroutine srmhd_get_enthalpy(ixO^L,rho,p,rhoh)
-  ! made by Z. MELIANI 14/02/2018
     use mod_global_parameters, only: nw, ndim
     integer, intent(in)                :: ixO^L
     double precision, intent(in)       :: rho(ixO^S),p(ixO^S)
@@ -27,10 +24,8 @@ module mod_srmhd_eos
     end if
   end subroutine srmhd_get_enthalpy
 
-
   !> Calculate thermal pressure for enthalpy and density
   subroutine srmhd_get_pressure_primitive_eos(ixI^L,ixO^L,rho,rhoh,pth)
-  ! made by Z. MELIANI 14/02/2018
     use mod_global_parameters
     implicit none
     integer, intent(in)            :: ixI^L, ixO^L
@@ -48,10 +43,8 @@ module mod_srmhd_eos
     end if cond_iseos
   end subroutine srmhd_get_pressure_primitive_eos
 
-
-  !> Calculate thermal pressure=(gamma-1)*(e-0.5*m**2/rho-b**2/2) within ixO^L
+  !> Calculate thermal pressure within ixO^L
   subroutine srmhd_get_pthermal_eos(ixI^L,ixO^L,x,rho,rhoh,e_in,pth)
-  ! made by Z. MELIANI 14/02/2018
     use mod_global_parameters
     implicit none
 
@@ -92,9 +85,7 @@ module mod_srmhd_eos
 
 
   !> Calculate the square of the thermal sound speed csound2 within ixO^L.
-  !> csound2=gamm*p/rho
   subroutine srmhd_get_csound2_eos(ixI^L,ixO^L,x,rho,rhoh,csound2)
-  ! made by Z. MELIANI 14/02/2018
     use mod_global_parameters
     implicit none
     integer, intent(in)             :: ixI^L, ixO^L
@@ -121,11 +112,8 @@ module mod_srmhd_eos
     end if
   end subroutine srmhd_get_csound2_eos
 
-
   !> Calculate the square of the thermal sound speed csound2 within ixO^L.
-  !> csound2=gamm*p/rho
   subroutine srmhd_get_csound2_prim_eos(ixI^L,ixO^L,x,rho,rhoh,p,csound2)
-  ! made by Z. MELIANI 14/02/2018
     use mod_global_parameters
     implicit none
     integer, intent(in)             :: ixI^L, ixO^L
@@ -152,7 +140,6 @@ module mod_srmhd_eos
 
   !> Calculate the Enthalpy and dhdp from pressure
   subroutine srmhd_get_val_h_dhdp(rho,p,drhodp,h,dhdp)
-  ! made by Z. MELIANI 14/02/2018
     use mod_global_parameters
     implicit none
 
@@ -187,7 +174,6 @@ module mod_srmhd_eos
 
    !> Calculate the pressure and dpdxi from xi
   subroutine srmhd_get_val_p_dpdxi(rho,h,drhodxi,dhdxi,p,dpdxi)
-  ! made by Z. MELIANI 14/02/2018
     use mod_global_parameters
     implicit none
 
@@ -197,7 +183,7 @@ module mod_srmhd_eos
 
     double precision                       :: Eth,E,dEdxi,rhotoE
 
-    is_energy : if(srmhd_energy) then
+    if(srmhd_energy) then
       is_eos : if(srmhd_eos) then
        E =(h+dsqrt(h**2.0d0+(srmhd_gamma**2.0d0-1.0d0)*rho**2.0d0))&
               /(srmhd_gamma+1.0d0)
@@ -218,15 +204,10 @@ module mod_srmhd_eos
        dpdxi = (dhdxi-drhodxi)/gamma_to_gamma_1
 
       end if is_eos
-    else is_energy
-
-!
-    end if is_energy
+    end if 
   end  subroutine srmhd_get_val_p_dpdxi
 
-
   subroutine srmhd_get_h_noflux(rho,h_p,h)
-  ! made by Z. MELIANI 14/02/2018
     use mod_global_parameters
     implicit none
 
@@ -234,16 +215,14 @@ module mod_srmhd_eos
 
     double precision,           intent(out):: h
 
-    is_energy : if(srmhd_energy) then
+    if(srmhd_energy) then
       is_eos : if(srmhd_eos) then
        h=0.5*((srmhd_gamma+1.0)*h_p-gamma_1*rho*(rho/h_p))  
       else is_eos
        h=rho+(h_p-rho)*srmhd_gamma
       end if is_eos
-    else is_energy
-
-!
-    end if is_energy
+    end if
 
   end subroutine srmhd_get_h_noflux
+
 end module mod_srmhd_eos
