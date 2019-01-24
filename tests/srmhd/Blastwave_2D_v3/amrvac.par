@@ -8,7 +8,7 @@
         itsave(1,1)   = 0
         itsave(1,2)   = 0
         ditsave_log   = 10
-        dtsave_dat    = 0.02d0
+        dtsave_dat    = 0.4d0
  /
 
  &stoplist
@@ -16,21 +16,21 @@
  /
 
  &methodlist
-        time_integrator = 'fourstep'
+        time_integrator = 'threestep'
         flux_scheme     = 20*'hll'
         limiter  = 20*'koren'
  /
 
  &boundlist
-        typeboundary_min1  = 6*'reflective'
-        typeboundary_min2  = 6*'reflective'
-        typeboundary_max1  = 6*'outflow'
-        typeboundary_max2  = 6*'outflow'
+        typeboundary_min1  = 8*'symm'
+        typeboundary_min2  = 8*'symm'
+        typeboundary_max1  = 8*'cont'
+        typeboundary_max2  = 8*'cont'
  /
 
  &meshlist
         refine_criterion = 3
-        refine_max_level = 1
+        refine_max_level = 3
     	refine_threshold = 20*0.2d0
         w_refine_weight(1)=0.6d0
         w_refine_weight(4)=0.2d0

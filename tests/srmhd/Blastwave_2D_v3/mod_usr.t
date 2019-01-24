@@ -10,7 +10,7 @@ contains
     use mod_variables
 
     usr_init_one_grid => initonegrid_usr
-    usr_set_B0 => specialset_B0
+!    usr_set_B0 => specialset_B0
 
     call set_coordinate_system("Cartesian")
     call srmhd_activate()
@@ -23,22 +23,24 @@ contains
     double precision, intent(in) :: x(ixG^S,1:ndim)
     double precision, intent(inout) :: w(ixG^S,1:nw)
 
-    double precision :: Rblast,Rhoblast,Rhoout,Pblast,Pout
+    double precision :: Rblast,Rhoblast,Rhoout,Pblast,Pout,rb(ixG^S)
     logical,save     :: first=.true.
 
    if(mype==0)then
       if (first) then
          print*,'A simple SRMHD blastwave problem (see Mignone et al. 2007)'
-	 print*,'Setup for 2D Cartesian geometry'
+         print*,'Setup for 2D Cartesian geometry'
       end if
    end if
 
+   rb(ixO^S)=sqrt(x(ixO^S,1)**2+x(ixO^S,2)**2)
    Rblast = 0.1d0
    Rhoblast = 1.0d-2
    Rhoout = 1.0d-4
    Pblast = 1.0
    Pout = 3.0d-5
-   where(x(ixO^S,1)<=Rblast)
+   
+   where(rb(ixO^S)<=Rblast)
       w(ixO^S,rho_)   = Rhoblast
       w(ixO^S,mom(1)) = 0.0d0
       w(ixO^S,mom(2)) = 0.0d0
@@ -60,7 +62,7 @@ contains
        if(mype==0)then
           print*,'Rblast=',Rblast
           print*,'Rhoblast=',Rhoblast
- 	  print*,'Rhoout=',Rhoout
+          print*,'Rhoout=',Rhoout
        end if
        first=.false.
     end if
