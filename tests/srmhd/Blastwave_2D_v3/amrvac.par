@@ -17,33 +17,33 @@
 
  &methodlist
         time_integrator = 'fourstep'
-        flux_scheme     = 20*'tvdlf'
+        flux_scheme     = 20*'hll'
         limiter  = 20*'koren'
  /
 
  &boundlist
-        typeboundary_min1  = 6*'periodic'
-        typeboundary_min2  = 6*'periodic'
-        typeboundary_max1  = 6*'periodic'
-        typeboundary_max2  = 6*'periodic'
+        typeboundary_min1  = 6*'reflective'
+        typeboundary_min2  = 6*'reflective'
+        typeboundary_max1  = 6*'outflow'
+        typeboundary_max2  = 6*'outflow'
  /
 
  &meshlist
         refine_criterion = 3
-        refine_max_level = 5
+        refine_max_level = 1
     	refine_threshold = 20*0.2d0
         w_refine_weight(1)=0.6d0
         w_refine_weight(4)=0.2d0
         w_refine_weight(5)=0.1d0
         w_refine_weight(6)=0.1d0
-        domain_nx1    = 60
-        domain_nx2    = 60
+        domain_nx1    = 80
+        domain_nx2    = 80
         block_nx1    = 10
         block_nx2    = 10
         xprobmin1     = 0.0d0
-        xprobmax1     = 1.0d0
+        xprobmax1     = 6.0d0
         xprobmin2     = 0.0d0
-        xprobmax2     = 1.0d0
+        xprobmax2     = 6.0d0
  /
 
  &paramlist
