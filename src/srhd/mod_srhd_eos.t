@@ -1,231 +1,232 @@
-!###########################################################################
-! module amrvacphys - srhdeos  
-! This module is developed using the paper Meliani et al 2004
-!===========================================================================
+!Adapted for SRHD, D. Millas, January 2019
+!Original for SRMHD, Z. Meliani, simplified by R. Keppens
 module mod_srhd_eos
+  use mod_global_parameters
+  use mod_srhd_parameters
+  implicit none
 
-contains
+ contains
 
-subroutine srhd_enthalpy(w,ixI^L,ixO^L,patchw,rhoh)
+!!DM Modify without the BField 
 
-!================== IMPORTANT ==================!
-!This subroutine is used only with primitive variables on input w
-!===============================================!
+  !>compute the enthalpy
+  subroutine srhd_get_enthalpy(ixO^L,rho,p,rhoh)
+    use mod_global_parameters, only: nw, ndim
+    integer, intent(in)                :: ixO^L
+    double precision, intent(in)       :: rho(ixO^S),p(ixO^S)
+    double precision, intent(inout)    :: rhoh(ixO^S)
+    double precision, dimension(ixO^S) :: E_th,E
 
-use mod_global_parameters
+    if(srhd_eos) then
+     E_th = p*inv_gamma_1
+     E    = E_th+&
+                   dsqrt(E_Th**2.0d0+rho**2.0d0)
+     rhoh = 0.5d0*((srhd_gamma+1.0d0) * E-&
+               gamma_1* rho*(rho/E))
+    else
+     rhoh = (rho+gamma_to_gamma_1*p)
+    end if
+  end subroutine srhd_get_enthalpy
 
-integer:: ixI^L,ixO^L
-double precision, dimension(ixI^S,1:nw):: w
-double precision, dimension(ixG^T)  :: E_Th,E,rhoh
-logical,          dimension(ixG^T)  :: patchw
-!--------------------------------------! 
+  !> Calculate thermal pressure for enthalpy and density
+  subroutine srhd_get_pressure_primitive_eos(ixI^L,ixO^L,rho,rhoh,pth)
+    use mod_global_parameters
+    implicit none
+    integer, intent(in)            :: ixI^L, ixO^L
+    double precision, intent(in)   :: rho(ixO^S),rhoh(ixO^S)
+    double precision, intent(out)  :: pth(ixI^S)
 
-where(.not.patchw(ixO^S))
-   !== thermal energy in polytropic definition ==!
-   E_Th(ixO^S) = w(ixO^S,pp_)/(eqpar(gamma_)-one) 
-   ! internal energy
-   E(ixO^S) = (E_Th(ixO^S) + dsqrt(E_th(ixO^S)**2.0d0+w(ixO^S,rho_)**2.0d0))
-   ! puposely writing rho/E/rho instead of rho^2/E for numerics
-   rhoh(ixO^S) = half*((eqpar(gamma_)+one)*E(ixO^S)-&
-	    (eqpar(gamma_)-one)*w(ixO^S,rho_)*(w(ixO^S,rho_)/E(ixO^S)))
-end where
+    double precision               :: E(ixO^S)
 
-return
-end subroutine srhd_enthalpy
-!===========================================================================
-subroutine Einternal(w,ixI^L,ixO^L,patchw,varconserve,E)
+    cond_iseos : if(srhd_eos) then
+     E = (rhoh+dsqrt(rhoh**2.0d0+(srhd_gamma**2.0d0-1.0d0)&
+            *rho**2.0d0))/(srhd_gamma+1.0d0)
+     pth(ixO^S) = 0.5d0*gamma_1* (E-rho*(rho/E))
+    else cond_iseos
+     pth(ixO^S) = (rhoh-rho)*inv_gamma_1
+    end if cond_iseos
+  end subroutine srhd_get_pressure_primitive_eos
 
-!================== IMPORTANT ==================!
-! if varconserve=.true.
-!The subroutine is used only with conserve variables on input w
-! if varconserve=.false.
-!The subroutine is used only with primitive variables on input w
-!===============================================!
+  !> Calculate thermal pressure within ixO^L
+  subroutine srhd_get_pthermal_eos(ixI^L,ixO^L,x,rho,rhoh,e_in,pth)
+    use mod_global_parameters
+    implicit none
 
-use mod_global_parameters
+    integer, intent(in)          :: ixI^L, ixO^L
+    double precision, intent(in) :: rho(ixO^S),rhoh(ixO^S),e_in(ixO^S)
+    double precision, intent(in) :: x(ixI^S,1:ndim)
+    double precision, intent(out):: pth(ixI^S)
 
-integer:: ixI^L,ixO^L
-double precision, dimension(ixI^S,1:nw):: w
-logical, intent(in)                 :: varconserve
-double precision, dimension(ixG^T)  :: E_Th,E
-logical,          dimension(ixG^T)  :: patchw
-!--------------------------------------!
-if (varconserve) then
-where(.not.patchw(ixO^S))
-   !== thermal energy in polytropic definition ==!
-   E_Th(ixO^S) = w(ixO^S,p_)/(eqpar(gamma_)-one)
-   ! internal energy
-   E(ixO^S) = (E_Th(ixO^S) + dsqrt(E_th(ixO^S)**2.0d0+(w(ixO^S,d_)/w(ixO^S,lfac_))**2.0d0))&
-                     -(w(ixO^S,d_)/w(ixO^S,lfac_))
-end where
-else
-   !== thermal energy in polytropic definition ==!
-   E_Th(ixO^S) = w(ixO^S,pp_)/(eqpar(gamma_)-one)
-   ! internal energy
-   E(ixO^S) = (E_Th(ixO^S) + dsqrt(E_th(ixO^S)**2.0d0+w(ixO^S,rho_)**2.0d0))&
-                     -w(ixO^S,rho_)
+    double precision             :: e(ixO^S)
 
-end if
+    is_notdiab: if(srhd_energy) then
 
-return
-end subroutine Einternal
+      is_einternal : if(block%e_is_internal) then
+        is_eos_einter : if(srhd_eos)then
+         pth(ixO^S) = 0.5d0*gamma_1*(e_in-rho*(rho/e_in))
+        else is_eos_einter
+         pth(ixO^S)=gamma_1*e_in
+        end if is_eos_einter
+      else is_einternal
+       is_eos : if(srhd_eos) then
+         e  = (rhoh+dsqrt(rhoh**2.0d0+(srhd_gamma**2.0d0-1.0d0)&
+            *rho**2.0d0))/(srhd_gamma+1.0d0)
 
-!=============================================================================
-subroutine getcsound2(w,ixI^L,ixO^L,vacconserve,rhoh,csound2)
+         pth(ixO^S) = 0.5d0*gamma_1&
+             * (e-rho*(rho/e))
+       else is_eos
+         pth(ixO^S) = (rhoh - rho)/gamma_to_gamma_1
+       end if is_eos
 
-!================== IMPORTANT ==================!
-!This subroutine is used with conserved variables in w when varconserve=T
-!This subroutine is used with primitive variables in w when varconserve=F
-!===============================================!
+      end if is_einternal
 
-use mod_global_parameters
+    else is_notdiab
 
-integer:: ixI^L,ixO^L
-double precision                      :: w(ixI^S,1:nw)
-logical, intent(in)                   :: vacconserve
-double precision, dimension(ixG^T)    :: rho
-double precision, dimension(ixG^T)    :: E_th,E
-double precision, dimension(ixG^T)    :: rhoh,csound2
-!_______________________________________________________________!
-if (vacconserve) then
-  !== the thermal energy in polytropic definition ==!
-  E_th(ixO^S) = (one/(eqpar(gamma_)-one) * w(ixO^S,p_))
-  rho(ixO^S) = (w(ixO^S,d_)/w(ixO^S,lfac_))
-  E(ixO^S) = (E_th(ixO^S) + dsqrt(E_th(ixO^S)**2.0d0+rho(ixO^S)**2.0d0))
-  rhoh(ixO^S) =  half*((eqpar(gamma_)+one)*E(ixO^S)-&
-   	    (eqpar(gamma_)-one)*rho(ixO^S)*(rho(ixO^S)/E(ixO^S)))
+      pth(ixO^S)=srhd_adiab*rho**srhd_gamma
 
-  !====== The sound speed ======!
-  csound2(ixO^S)=half*w(ixO^S,p_)/rhoh(ixO^S)&
-                 *((eqpar(gamma_)+one)&
-                 +(eqpar(gamma_)-one)*(rho(ixO^S)/E(ixO^S))**2.0d0)
-else
-  !== the thermal energy in polytropic definition ==!
-  E_th(ixO^S) = (one/(eqpar(gamma_)-one) * w(ixO^S,p_))
-  E(ixO^S) = (E_th(ixO^S) + dsqrt(E_th(ixO^S)**2.0d0+w(ixO^S,rho_)**2.0d0))
-  rhoh(ixO^S) =  half*((eqpar(gamma_)+one)*E(ixO^S)-&
-   	    (eqpar(gamma_)-one)*w(ixO^S,rho_)*(w(ixO^S,rho_)/E(ixO^S)))
+    end if is_notdiab
+  end subroutine srhd_get_pthermal_eos
 
-  !====== The sound speed ======!
-  csound2(ixO^S)=half*w(ixO^S,p_)/rhoh(ixO^S)&
-                 *((eqpar(gamma_)+one)&
-                 +(eqpar(gamma_)-one)*(w(ixO^S,rho_)/E(ixO^S))**2.0d0)
-end if
-end subroutine getcsound2
-!=============================================================================
-subroutine FuncEnthalpy(pcurrent,lfac2inv,d,s^C,tau,sqrs,xicurrent,dv2d2p,h,dhdp,ierror)
 
-use mod_global_parameters
-  
-integer:: ixI^L,ixO^L
-double precision:: pcurrent,lfac2inv,d,s^C,tau,sqrs,xicurrent
-double precision:: h,dhdp
-integer::ierror
+  !> Calculate the square of the thermal sound speed csound2 within ixO^L.
+  subroutine srhd_get_csound2_eos(ixI^L,ixO^L,x,rho,rhoh,csound2)
+    use mod_global_parameters
+    implicit none
+    integer, intent(in)             :: ixI^L, ixO^L
+    double precision, intent(in)    :: rho(ixO^S),rhoh(ixO^S)
+    double precision, intent(in)    :: x(ixI^S,1:ndim)
+    double precision, intent(out)   :: csound2(ixO^S)
 
-double precision:: rho
-double precision:: E_th,E
-double precision:: dv2d2p,dE_thdp,dEdp
-!_______________________________________________________________!
-rho=d*sqrt(lfac2inv)
-!== The Classical definition of the thermal energy ==!
-E_th = pcurrent/(eqpar(gamma_)-one)
-E = (E_th + dsqrt(E_th**2.0+rho**2.0d0))
-!== Enthalpy ==!
-h = half *((eqpar(gamma_)+one)*E-(eqpar(gamma_)-one)*rho/(E/rho))
+    double precision                :: h(ixO^S),E(ixO^S),p(ixO^S)
+    if(srhd_energy) then
+      if(srhd_eos) then
 
-!=== Derivative of thermal energy ===!
-dE_thdp = (one/(eqpar(gamma_)-one))
+       E(ixO^S)=(rhoh(ixO^S)+dsqrt(rhoh(ixO^S)**2.0d0+(srhd_gamma**2.0d0-1.0d0)&
+             *rho**2.0d0))/(srhd_gamma+1.0d0)
+       p=0.5d0*(E-rho*(rho/E))
+       csound2(ixO^S)=(p&
+                   *((srhd_gamma+1.0d0)&
+                   +gamma_1*(rho/E)**2.0d0))&
+                   /(2.0*rhoh)
+      else
+       csound2(ixO^S)=srhd_gamma*p/rho
+      end if
+    else
+      csound2(ixO^S)=srhd_gamma*srhd_adiab*rho**gamma_1
+    end if
+  end subroutine srhd_get_csound2_eos
 
-!=== Derivative of internal energy ===!
-dEdp = dE_thdp * (one+E_th/dsqrt(E_th**2.0d0+rho**2.0d0))&
-	+  d**2.0d0*dv2d2p/dsqrt(E_th**2.0d0+rho**2.0d0)
+  !> Calculate the square of the thermal sound speed csound2 within ixO^L.
+  subroutine srhd_get_csound2_prim_eos(ixI^L,ixO^L,x,rho,rhoh,p,csound2)
+    use mod_global_parameters
+    implicit none
+    integer, intent(in)             :: ixI^L, ixO^L
+    double precision, intent(in)    :: rho(ixO^S),rhoh(ixO^S),p(ixO^S)
+    double precision, intent(in)    :: x(ixI^S,1:ndim)
+    double precision, intent(out)   :: csound2(ixO^S)
 
-!====== Derivative of Enthalpy ======!
-dhdp = half*((eqpar(gamma_)+one)*dEdp + &
- (eqpar(gamma_)-one)*(rho**2.0d0/E)*(-2.0d0*dv2d2p/lfac2inv+dEdp/E)) 
+    double precision                :: h(ixI^S),E(ixI^S)
+    if(srhd_energy) then
+      if(srhd_eos) then
+       E(ixO^S)=(rhoh(ixO^S)+dsqrt(rhoh(ixO^S)**2.0d0+(srhd_gamma**2.0d0-1.0d0)&
+             *rho**2.0d0))/(srhd_gamma+1.0d0)
+       csound2(ixO^S)=(p&
+                   *((srhd_gamma+1.0d0)&
+                   +gamma_1*(rho/E)**2.0d0))&
+                   /(2.0*rhoh)
+      else
+       csound2(ixO^S)=srhd_gamma*p/rho
+      end if
+    else
+      csound2(ixO^S)=srhd_gamma*srhd_adiab*rho**gamma_1
+    end if
+  end subroutine srhd_get_csound2_prim_eos
 
-return
-end subroutine FuncEnthalpy
-!=============================================================================!
-subroutine smallvaluesEOS
+  !> Calculate the Enthalpy and dhdp from pressure
+  subroutine srhd_get_val_h_dhdp(rho,p,drhodp,h,dhdp)
+    use mod_global_parameters
+    implicit none
 
-use mod_global_parameters
+    double precision,           intent(in) :: rho,p,drhodp
+    double precision,           intent(out):: h
+    double precision, optional, intent(out):: dhdp
 
-double precision::Lsmallrho,Lsmallp,LsmallE
-!_______________________________________________________________!
-Lsmallrho=(1.0d0 + 10.0d0 * minrho) * minrho
-Lsmallp=(1.0d0 + 10.0d0 * minp) * minp
-LsmallE=Lsmallp/(eqpar(gamma_)-one)+&
-	dsqrt((Lsmallp/(eqpar(gamma_)-one))**2.0d0+Lsmallrho**2.0d0)
+    double precision             :: Eth,E,dEthdp,dEdp,sqrtEt2rho2,rhotoE
+    
+    is_energy : if(srhd_energy) then
+      is_eos : if(srhd_eos) then
+       
+       Eth = p*inv_gamma_1
+       sqrtEt2rho2 = dsqrt(Eth**2.0d0+rho**2.0d0) 
+       E = (Eth + sqrtEt2rho2)
+       rhotoE= rho/E
+       h = 0.5 *((srhd_gamma+1.0d0) * E-gamma_1 * rho*rhotoE)
 
-smalltau=half*((eqpar(gamma_)+one)*LsmallE-&
-    (eqpar(gamma_)-one)*Lsmallrho**2.0d0/LsmallE)-Lsmallp-Lsmallrho
-! may need to replace by smallxi above
+       if(present(dhdp))then
+        dEthdp = inv_gamma_1
+        dEdp   = dEthdp +(dEthdp*Eth+rho*drhodp)/sqrtEt2rho2
+        dhdp   = 0.5 *(((srhd_gamma+1.0d0) + rhotoE**2.0)* dEdp&
+                       - 2.0*gamma_1*rhotoE* drhodp)
+       end if
+      else is_eos
+       h=rho+gamma_to_gamma_1*p
+       if(present(dhdp))dhdp=drhodp+gamma_to_gamma_1
+      end if is_eos
+    else is_energy
+    end if is_energy
+  end  subroutine srhd_get_val_h_dhdp
 
-smallxi=half*((eqpar(gamma_)+one)*LsmallE-&
-   (eqpar(gamma_)-one)*Lsmallrho**2.0d0/LsmallE)
+   !> Calculate the pressure and dpdxi from xi
+  subroutine srhd_get_val_p_dpdxi(rho,h,drhodxi,dhdxi,p,dpdxi)
+    use mod_global_parameters
+    implicit none
 
-end subroutine smallvaluesEOS
-!=============================================================================!
-subroutine Bisection_Enthalpy(pcurrent,lfac2inv,d,s^C,tau,sqrs,xicurrent,h,ierror)
+    double precision,           intent(in) :: rho,h,drhodxi,dhdxi
+    double precision,           intent(out):: p
+    double precision,           intent(out):: dpdxi
 
-use mod_global_parameters
-  
-integer:: ixI^L,ixO^L
-double precision:: pcurrent,lfac2inv,d,s^C,tau,sqrs,xicurrent
-double precision:: h
-integer::ierror
+    double precision                       :: Eth,E,dEdxi,rhotoE
 
-double precision:: rho
-double precision:: E_th,E
-!_______________________________________________________________!
-rho=d*sqrt(lfac2inv)
-E_th = (one/(eqpar(gamma_)-one) * pcurrent)
-E = (E_th + dsqrt(E_th**2.0d0+rho**2.0d0))
-!== Enthalpy ==!
-h = half *((eqpar(gamma_)+one) * E-(eqpar(gamma_)-one) * rho*(rho/E))
+    if(srhd_energy) then
+      is_eos : if(srhd_eos) then
+       E =(h+dsqrt(h**2.0d0+(srhd_gamma**2.0d0-1.0d0)*rho**2.0d0))&
+              /(srhd_gamma+1.0d0)
 
-return
-end subroutine Bisection_Enthalpy
-!=============================================================================
-subroutine pressureNoFlow(pressure,tau,d)
+       rhotoE = rho/E
 
-use mod_global_parameters
+       ! output pressure
+       p=gamma_1/2.0d0* (E-rho*rhotoE)
+      
+       dEdxi=(dhdxi+(h*dhdxi+(srhd_gamma**2.0d0-1.0d0)*rho*drhodxi)&
+             /dsqrt(h**2.0d0+(srhd_gamma**2.0d0-1.0d0)*rho**2.0d0))&
+             / (srhd_gamma+1.0d0) 
+       
+       dpdxi=gamma_1/2.0d0*((1.0+rhotoE**2.0)*dEdxi-2.0*rhotoE*drhodxi)
 
-double precision:: pressure,tau,d
-!_______________________________________________________________!
+      else is_eos
+       p = (h - rho)/gamma_to_gamma_1
+       dpdxi = (dhdxi-drhodxi)/gamma_to_gamma_1
 
-pressure=half*(eqpar(gamma_)-one)*(tau+d-d**2/(tau+d))
+      end if is_eos
+    end if 
+  end  subroutine srhd_get_val_p_dpdxi
 
-end subroutine pressureNoFlow
-!=============================================================================
-subroutine Calcule_Geffect(w,ixI^L,ixO^L,varconserve,Geff)
+  subroutine srhd_get_h_noflux(rho,h_p,h)
+    use mod_global_parameters
+    implicit none
 
-!================== IMPORTANT ==================!
-!This subroutine is used with conserved variables in w when varconserve=T
-!This subroutine is used with primitive variables in w when varconserve=F
-!   both cases assume updated auxiliary variables p_ en lfac_
-!===============================================!
-use mod_global_parameters
+    double precision,           intent(in) :: rho,h_p
 
-integer:: ixI^L,ixO^L
-double precision:: w(ixI^S,1:nw)
-logical,intent(in)         :: varconserve
-double precision, dimension(ixG^T)    :: Geff
-!-----------------------------------
-! assume we have the pressure in w(ixO^S,p_)
-! and the Lorentz factor in lfac_ and the conserved variables
-if (varconserve) then
-  Geff(ixO^S) = eqpar(gamma_)-half*(eqpar(gamma_)-one) *          &
-       (one-((w(ixO^S,d_)/w(ixO^S,lfac_))/(w(ixO^S, p_)/(eqpar(gamma_)-one)+  &
-       dsqrt((w(ixO^S,p_)/(eqpar(gamma_)-one))**2.0d0+&
-       (w(ixO^S,d_)/w(ixO^S,lfac_))**2.0d0)))**2.0d0)
-else
-  Geff(ixO^S) = eqpar(gamma_)-half*(eqpar(gamma_)-one) *          &
-       (one-(w(ixO^S,rho_)/(w(ixO^S, p_)/(eqpar(gamma_)-one)+  &
-       dsqrt((w(ixO^S,p_)/(eqpar(gamma_)-one))**2.0d0+&
-       w(ixO^S,rho_)**2.0d0)))**2.0d0)
-end if
-end subroutine Calcule_Geffect
+    double precision,           intent(out):: h
+
+    if(srhd_energy) then
+      is_eos : if(srhd_eos) then
+       h=0.5*((srhd_gamma+1.0)*h_p-gamma_1*rho*(rho/h_p))  
+      else is_eos
+       h=rho+(h_p-rho)*srhd_gamma
+      end if is_eos
+    end if
+
+  end subroutine srhd_get_h_noflux
 
 end module mod_srhd_eos
