@@ -10,8 +10,6 @@ module mod_srhd_hllc
 
 contains
 
-! DM Modify without BField
-
   subroutine srhd_hllc_init()
     use mod_physics_hllc
 
@@ -77,9 +75,8 @@ contains
     
 
     double precision, dimension(ixG^T,mom(1):mom(ndir))     :: vCD
-    double precision, dimension(ixG^T)     :: Aco,Bco,Cco,Delta, &
-                                              BpdotfBp, Bp2,fBp2
-    logical         , dimension(ixI^S)     :: Cond_patchf, Cond_Bidimhll
+    double precision, dimension(ixG^T)     :: Aco,Bco,Cco,Delta
+    logical         , dimension(ixI^S)     :: Cond_patchf
     double precision                       :: Epsilon
     integer                                :: iw
 
@@ -110,45 +107,11 @@ contains
 !  write this eq as:  Aco lambda^2 - Bco lambda + Cco = 0
 where(Cond_patchf(ixO^S))
   ! only store the HD part first, sufficient for case where normal B vanishes
-  Aco(ixO^S)    = Fhll(ixO^S,e_)+Fhll(ixO^S,d_)
-  Bco(ixO^S)    = Fhll(ixO^S,mom(idim))+whll(ixO^S,e_)+whll(ixO^S,d_)
+  Aco(ixO^S)    = Fhll(ixO^S,tau_)+Fhll(ixO^S,d_)
+  Bco(ixO^S)    = Fhll(ixO^S,mom(idim))+whll(ixO^S,tau_)+whll(ixO^S,d_)
   Cco(ixO^S)    = whll(ixO^S,mom(idim))
-endwhere
-
-! condition on the normal magnetic field
-Cond_Bidimhll(ixO^S) = (dabs(whll(ixO^S,mag(idim)))<=smalldouble)
-
-! Case With Normal Magnetic field
-if(any(.not.Cond_Bidimhll(ixO^S).and.Cond_patchf(ixO^S)))then
-  where(.not.Cond_Bidimhll(ixO^S).and.Cond_patchf(ixO^S))
-   !---- Initialisation ----!
-    BpdotfBp(ixO^S) = zero
-    Bp2(ixO^S) = zero
-    fBp2(ixO^S) = zero
-  endwhere
-
-  !The calculation of the Transverse components part
-  do iw=mag(1),mag(ndir)
-    if(iw /= mag(idim))then
-      where(.not.Cond_Bidimhll(ixO^S) .and. Cond_patchf(ixO^S))
-        BpdotfBp(ixO^S) = BpdotfBp(ixO^S) + whll(ixO^S,iw)*Fhll(ixO^S,iw)
-        Bp2(ixO^S) = Bp2(ixO^S) + whll(ixO^S,iw)**2.0d0
-        fBp2(ixO^S) = fBp2(ixO^S) + Fhll(ixO^S,iw)**2.0d0
-      endwhere
-     endif
-    enddo
-
-    where(.not.Cond_Bidimhll(ixO^S) .and. Cond_patchf(ixO^S))
-     Aco(ixO^S)    = Aco(ixO^S) - BpdotfBp(ixO^S)
-     Bco(ixO^S)    = Bco(ixO^S)- Bp2(ixO^S) - fBp2(ixO^S)
-     Cco(ixO^S)    = Cco(ixO^S) - BpdotfBp(ixO^S)
-    endwhere
-   endif
-
-
-   where(Cond_patchf(ixO^S))
-    Delta(ixO^S) = Bco(ixO^S)**2.0d0- 4.0d0*Aco(ixO^S) * Cco(ixO^S)
-    where(Aco(ixO^S)/=zero .and. Delta(ixO^S)>=zero)
+  Delta(ixO^S) = Bco(ixO^S)**2.0d0- 4.0d0*Aco(ixO^S) * Cco(ixO^S)
+  where(Aco(ixO^S)/=zero .and. Delta(ixO^S)>=zero)
      !Calculate the Characteristic speed at the contact
      ! only the minus sign is between [-1,1]
      lambdaCD(ixO^S) = (Bco(ixO^S) - dsqrt(Delta(ixO^S)))/(2.0d0*Aco(ixO^S))
@@ -158,14 +121,14 @@ if(any(.not.Cond_Bidimhll(ixO^S).and.Cond_patchf(ixO^S)))then
      lambdaCD(ixO^S) = zero
      ! we will fall back to HLL flux case in this degeneracy
      patchf(ixO^S) =  3
-    endwhere
-   endwhere
+  endwhere
+endwhere
 
-   where(patchf(ixO^S)==3)
-    Cond_patchf(ixO^S)=.false.
-   end where
+where(patchf(ixO^S)==3)
+   Cond_patchf(ixO^S)=.false.
+end where
 
-   where(Cond_patchf(ixO^S))
+where(Cond_patchf(ixO^S))
     ! double check whether obtained speed is in between min and max speeds given
     ! and identify in which part of the Riemann fan the time-axis is
     where(cmin(ixO^S)<zero.and.lambdaCD(ixO^S)>zero&
@@ -179,60 +142,57 @@ if(any(.not.Cond_Bidimhll(ixO^S).and.Cond_patchf(ixO^S)))then
      ! we will fall back to HLL flux case in this degeneracy
      patchf(ixO^S) =  3
     endwhere
-   endwhere
+endwhere
 
-   where(patchf(ixO^S)== 3)
+where(patchf(ixO^S)== 3)
     Cond_patchf(ixO^S)=.false.
-   end where
+end where
 
-
-   ! handle the specific case where the time axis is exactly on the CD
-   if(any(lambdaCD(ixO^S)==zero.and.Cond_patchf(ixO^S)))then
+! handle the specific case where the time axis is exactly on the CD
+if(any(lambdaCD(ixO^S)==zero.and.Cond_patchf(ixO^S)))then
     !determine which sector (forward or backward) of the Riemann fan is smallest
     ! and select left or right flux accordingly
-    where(lambdaCD(ixO^S)==zero.and.Cond_patchf(ixO^S))
-     where(-cmin(ixO^S)>=cmax(ixO^S))
+   where(lambdaCD(ixO^S)==zero.and.Cond_patchf(ixO^S))
+      where(-cmin(ixO^S)>=cmax(ixO^S))
       patchf(ixO^S) =  1
-     elsewhere
+      elsewhere
       patchf(ixO^S) = -1
-     endwhere
-    endwhere
-   endif
+      endwhere
+   endwhere
+ endif
 
-
-
-   ! eigenvalue lambda for contact is near zero: decrease noise by this trick
-   if(flathllc)then
+! eigenvalue lambda for contact is near zero: decrease noise by this trick
+if(flathllc)then
     Epsilon=1.0d-6
     where(Cond_patchf(ixO^S).and. &
      dabs(lambdaCD(ixO^S))/max(cmax(ixO^S),Epsilon)< Epsilon  .and. &
      dabs(lambdaCD(ixO^S))/max(dabs(cmin(ixO^S)),Epsilon)< Epsilon)
      lambdaCD(ixO^S) =  zero
     end where
-   end if
+end if
     
-
-   if(any(dabs(lambdaCD(ixO^S))>1.0d0 .and. Cond_patchf(ixO^S)))then
+! done with computations, remaining just for emergencies...
+if(any(dabs(lambdaCD(ixO^S))>1.0d0 .and. Cond_patchf(ixO^S)))then
     call mpistop("problems with lambdaCD>1")
-   endif
+endif
 
-   ! next should never happen
-   if(any(patchf(ixO^S)==0))then
+! next should never happen
+if(any(patchf(ixO^S)==0))then
     call mpistop("patchf=0")
-   endif
+endif
 
+return
+end subroutine srhd_get_lCD
 
-  end subroutine srhd_get_lCD
-
-  subroutine srhd_get_wCD(wLC,wRC,whll,fRC,fLC,Fhll,patchf,lambdaCD,&
+subroutine srhd_get_wCD(wLC,wRC,whll,fRC,fLC,Fhll,patchf,lambdaCD,&
                     cmin,cmax,&
                     ixI^L,ixO^L,idim,f)
-  ! made by Z. MELIANI 14/02/2018
-  ! compute the intermediate state U*
-  ! only needed where patchf=-1/1
+! made by Z. MELIANI 14/02/2018
+! compute the intermediate state U*
+! only needed where patchf=-1/1
   
-  ! reference Li S., JCP, 203, 2005, 344-357
-  ! reference T. Miyoski, Kusano JCP, 2008, 2005.
+! reference Li S., JCP, 203, 2005, 344-357
+! reference T. Miyoski, Kusano JCP, 2008, 2005.
     use mod_global_parameters
     
     integer, intent(in)                                      :: ixI^L,ixO^L,idim
@@ -244,7 +204,8 @@ if(any(.not.Cond_Bidimhll(ixO^S).and.Cond_patchf(ixO^S)))then
     double precision, dimension(ixI^S,1:nwflux),intent(out)  :: f
     double precision, dimension(ixI^S,1:nw)         :: wCD,wSub
     double precision, dimension(ixI^S,1:nwflux)     :: fSub
-    double precision, dimension(ixI^S)              :: vSub,cspeed,pCD,VdotBCD
+    double precision, dimension(ixI^S)              :: vSub,cspeed,pCD
+
     integer         , dimension(ixI^S),intent(inout):: patchf
 
     double precision, dimension(ixG^T,mom(1):mom(ndir))      :: vCD
@@ -252,9 +213,9 @@ if(any(.not.Cond_Bidimhll(ixO^S).and.Cond_patchf(ixO^S)))then
     double precision, dimension(ixI^S)             :: vRC,vLC
     logical         , dimension(ixI^S)             :: Cond_Bidimhll
     integer                                        :: n, iw, idir,ix^D
-    double precision, dimension(ixO^S)             :: VdotB, B2
 
-    !-------------- auxiliary Speed and array-------------!
+!-------------- auxiliary Speed and array-------------!
+! DM Check if this is needed
     call srhd_get_v_idim(wRC,ixI^L,ixO^L,idim,vRC)
     call srhd_get_v_idim(wLC,ixI^L,ixO^L,idim,vLC)
 
