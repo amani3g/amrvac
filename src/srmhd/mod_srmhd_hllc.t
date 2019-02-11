@@ -1,3 +1,6 @@
+!> HLLC solver for SRMHD
+! made by Z. Meliani 14/02/2018, modified D. Millas February 2019
+
 module mod_srmhd_hllc
   use mod_srmhd_parameters
   use mod_srmhd_phys 
@@ -18,7 +21,6 @@ contains
   end subroutine srmhd_hllc_init
 
   subroutine srmhd_diffuse_hllcd(ixI^L,ixO^L,idim,wLC,wRC,fLC,fRC,patchf)
-  ! made by Z. MELIANI 14/02/2018
   ! when method is hllcd or hllcd1 then: 
   ! this subroutine is to enforce regions where we AVOID HLLC
   ! and use TVDLF instead: this is achieved by setting patchf to 4 in
@@ -32,7 +34,6 @@ contains
     integer, dimension(ixI^S), intent(inout) :: patchf
     
     integer :: ixOO^D,TxOO^L
-
     
     ! In a user-controlled region around any point with flux sign change between
     ! left and right, ensure fallback to TVDLF
@@ -42,11 +43,11 @@ contains
       TxOOmax^D= min(ixOO^D + nxdiffusehllc*kr(idim,^D), ixOmax^D);
       \}
       if(abs(patchf(ixOO^D)) == 1 .or. abs(patchf(ixOO^D)) == 4)Then
-         if(any(fRC(ixOO^D,1:nwflux)*fLC(ixOO^D,1:nwflux)<-smalldouble))Then
-           where(Abs(patchf(TxOO^S))==1)
-             patchf(TxOO^S) = 4
-           endwhere
-         endif
+          if(any(fRC(ixOO^D,1:nwflux)*fLC(ixOO^D,1:nwflux)<-smalldouble))Then
+            where(Abs(patchf(TxOO^S))==1)
+              patchf(TxOO^S) = 4
+            endwhere
+          endif
       endif
     {enddo^D&\}
   
@@ -54,7 +55,6 @@ contains
 
   subroutine srmhd_get_lCD(wLC,wRC,fLC,fRC,cmin,cmax,idim,ixI^L,ixO^L, &
                     whll,Fhll,lambdaCD,patchf)
-  ! made by Z. MELIANI 14/02/2018
   
   ! Calculate lambda at CD and set the patchf to know the orientation
   ! of the riemann fan and decide on the flux choice
@@ -99,7 +99,6 @@ contains
       endwhere
     enddo
 
-
 !Calculate the Characteristic speed at the contact
 ! part specific to SRMHD and HLLC
 ! Eq. 41, Mignone & Bodo, MNRAS 2006
@@ -117,113 +116,106 @@ Cond_Bidimhll(ixO^S) = (dabs(whll(ixO^S,mag(idim)))<=smalldouble)
 ! Case With Normal Magnetic field
 if(any(.not.Cond_Bidimhll(ixO^S).and.Cond_patchf(ixO^S)))then
   where(.not.Cond_Bidimhll(ixO^S).and.Cond_patchf(ixO^S))
-   !---- Initialisation ----!
-    BpdotfBp(ixO^S) = zero
-    Bp2(ixO^S) = zero
-    fBp2(ixO^S) = zero
+    !---- Initialisation ----!
+     BpdotfBp(ixO^S) = 0.0d0
+     Bp2(ixO^S) = 0.0d0
+     fBp2(ixO^S) = 0.0d0
   endwhere
 
   !The calculation of the Transverse components part
   do iw=mag(1),mag(ndir)
-    if(iw /= mag(idim))then
-      where(.not.Cond_Bidimhll(ixO^S) .and. Cond_patchf(ixO^S))
-        BpdotfBp(ixO^S) = BpdotfBp(ixO^S) + whll(ixO^S,iw)*Fhll(ixO^S,iw)
-        Bp2(ixO^S) = Bp2(ixO^S) + whll(ixO^S,iw)**2.0d0
-        fBp2(ixO^S) = fBp2(ixO^S) + Fhll(ixO^S,iw)**2.0d0
-      endwhere
+     if(iw /= mag(idim))then
+       where(.not.Cond_Bidimhll(ixO^S) .and. Cond_patchf(ixO^S))
+         BpdotfBp(ixO^S) = BpdotfBp(ixO^S) + whll(ixO^S,iw)*Fhll(ixO^S,iw)
+         Bp2(ixO^S) = Bp2(ixO^S) + whll(ixO^S,iw)**2.0d0
+         fBp2(ixO^S) = fBp2(ixO^S) + Fhll(ixO^S,iw)**2.0d0
+       endwhere
      endif
-    enddo
+  enddo
 
-    where(.not.Cond_Bidimhll(ixO^S) .and. Cond_patchf(ixO^S))
+  where(.not.Cond_Bidimhll(ixO^S) .and. Cond_patchf(ixO^S))
      Aco(ixO^S)    = Aco(ixO^S) - BpdotfBp(ixO^S)
      Bco(ixO^S)    = Bco(ixO^S)- Bp2(ixO^S) - fBp2(ixO^S)
      Cco(ixO^S)    = Cco(ixO^S) - BpdotfBp(ixO^S)
     endwhere
-   endif
+  endif
 
-
-   where(Cond_patchf(ixO^S))
+ where(Cond_patchf(ixO^S))
     Delta(ixO^S) = Bco(ixO^S)**2.0d0- 4.0d0*Aco(ixO^S) * Cco(ixO^S)
-    where(Aco(ixO^S)/=zero .and. Delta(ixO^S)>=zero)
+    where(Aco(ixO^S)/=0.0d0 .and. Delta(ixO^S)>=0.0d0)
      !Calculate the Characteristic speed at the contact
      ! only the minus sign is between [-1,1]
      lambdaCD(ixO^S) = (Bco(ixO^S) - dsqrt(Delta(ixO^S)))/(2.0d0*Aco(ixO^S))
-    elsewhere(Aco(ixO^S)==zero .and.  Bco(ixO^S)/=zero)
+    elsewhere(Aco(ixO^S)==0.0d0 .and.  Bco(ixO^S)/=0.0d0)
      lambdaCD(ixO^S) = Cco(ixO^S)/Bco(ixO^S)
-    elsewhere(Delta(ixO^S)<zero)
-     lambdaCD(ixO^S) = zero
+    elsewhere(Delta(ixO^S)<0.0d0)
+     lambdaCD(ixO^S) = 0.0d0
      ! we will fall back to HLL flux case in this degeneracy
      patchf(ixO^S) =  3
     endwhere
-   endwhere
+ endwhere
 
-   where(patchf(ixO^S)==3)
+ where(patchf(ixO^S)==3)
     Cond_patchf(ixO^S)=.false.
-   end where
+ end where
 
-   where(Cond_patchf(ixO^S))
+ where(Cond_patchf(ixO^S))
     ! double check whether obtained speed is in between min and max speeds given
     ! and identify in which part of the Riemann fan the time-axis is
-    where(cmin(ixO^S)<zero.and.lambdaCD(ixO^S)>zero&
+    where(cmin(ixO^S)<0.0d0 .and. lambdaCD(ixO^S)>0.0d0&
           .and.lambdaCD(ixO^S)<cmax(ixO^S))
      patchf(ixO^S) = -1
-    elsewhere(cmax(ixO^S)>zero.and.lambdaCD(ixO^S)<zero&
+    elsewhere(cmax(ixO^S)>0.0d0 .and. lambdaCD(ixO^S)<0.0d0&
               .and.lambdaCD(ixO^S)>cmin(ixO^S))
      patchf(ixO^S) =  1
     elsewhere(lambdaCD(ixO^S)>=cmax(ixO^S).or.lambdaCD(ixO^S) <= cmin(ixO^S))
-     lambdaCD(ixO^S) = zero
+     lambdaCD(ixO^S) = 0.0d0
      ! we will fall back to HLL flux case in this degeneracy
      patchf(ixO^S) =  3
     endwhere
-   endwhere
+ endwhere
 
-   where(patchf(ixO^S)== 3)
+ where(patchf(ixO^S)== 3)
     Cond_patchf(ixO^S)=.false.
-   end where
+ end where
 
-
-   ! handle the specific case where the time axis is exactly on the CD
-   if(any(lambdaCD(ixO^S)==zero.and.Cond_patchf(ixO^S)))then
+! handle the specific case where the time axis is exactly on the CD
+ if(any(lambdaCD(ixO^S)==0.0d0 .and. Cond_patchf(ixO^S)))then
     !determine which sector (forward or backward) of the Riemann fan is smallest
     ! and select left or right flux accordingly
-    where(lambdaCD(ixO^S)==zero.and.Cond_patchf(ixO^S))
-     where(-cmin(ixO^S)>=cmax(ixO^S))
-      patchf(ixO^S) =  1
-     elsewhere
-      patchf(ixO^S) = -1
-     endwhere
+    where(lambdaCD(ixO^S)==0.0d0 .and. Cond_patchf(ixO^S))
+       where(-cmin(ixO^S)>=cmax(ixO^S))
+       patchf(ixO^S) =  1
+       elsewhere
+       patchf(ixO^S) = -1
+       endwhere
     endwhere
-   endif
+ endif
 
-
-
-   ! eigenvalue lambda for contact is near zero: decrease noise by this trick
-   if(flathllc)then
+! eigenvalue lambda for contact is near zero: decrease noise by this trick
+ if(flathllc)then
     Epsilon=1.0d-6
     where(Cond_patchf(ixO^S).and. &
-     dabs(lambdaCD(ixO^S))/max(cmax(ixO^S),Epsilon)< Epsilon  .and. &
-     dabs(lambdaCD(ixO^S))/max(dabs(cmin(ixO^S)),Epsilon)< Epsilon)
-     lambdaCD(ixO^S) =  zero
+      dabs(lambdaCD(ixO^S))/max(cmax(ixO^S),Epsilon)< Epsilon  .and. &
+      dabs(lambdaCD(ixO^S))/max(dabs(cmin(ixO^S)),Epsilon)< Epsilon)
+      lambdaCD(ixO^S) =  0.0d0
     end where
-   end if
+ end if
     
-
-   if(any(dabs(lambdaCD(ixO^S))>1.0d0 .and. Cond_patchf(ixO^S)))then
+ if(any(dabs(lambdaCD(ixO^S))>1.0d0 .and. Cond_patchf(ixO^S)))then
     call mpistop("problems with lambdaCD>1")
-   endif
+ endif
 
-   ! next should never happen
-   if(any(patchf(ixO^S)==0))then
+! next should never happen
+ if(any(patchf(ixO^S)==0))then
     call mpistop("patchf=0")
-   endif
-
+ endif
 
   end subroutine srmhd_get_lCD
 
   subroutine srmhd_get_wCD(wLC,wRC,whll,fRC,fLC,Fhll,patchf,lambdaCD,&
                     cmin,cmax,&
                     ixI^L,ixO^L,idim,f)
-  ! made by Z. MELIANI 14/02/2018
   ! compute the intermediate state U*
   ! only needed where patchf=-1/1
   
@@ -254,72 +246,66 @@ if(any(.not.Cond_Bidimhll(ixO^S).and.Cond_patchf(ixO^S)))then
     call srmhd_get_v_idim(wRC,ixI^L,ixO^L,idim,vRC)
     call srmhd_get_v_idim(wLC,ixI^L,ixO^L,idim,vLC)
 
-
-    where(patchf(ixO^S) == 1)
+  where(patchf(ixO^S) == 1)
      cspeed(ixO^S) = cmax(ixO^S)
      vSub(ixO^S)   = vRC(ixO^S)
-    elsewhere(patchf(ixO^S) == -1)
+  elsewhere(patchf(ixO^S) == -1)
      cspeed(ixO^S) = cmin(ixO^S)
      vSub(ixO^S)   = vLC(ixO^S)
-    endwhere
+  endwhere
 
-    do iw=1,nwflux
+  do iw=1,nwflux
      if(iw /= mag(idim))then
-      where(patchf(ixO^S) == 1)
-       wSub(ixO^S,iw) =  wRC(ixO^S,iw)
-       fSub(ixO^S,iw) =  fRC(ixO^S,iw)
-      elsewhere(patchf(ixO^S) == -1)
-       wSub(ixO^S,iw) =  wLC(ixO^S,iw)
-       fSub(ixO^S,iw) =  fLC(ixO^S,iw)
-      endwhere
+        where(patchf(ixO^S) == 1)
+        wSub(ixO^S,iw) =  wRC(ixO^S,iw)
+        fSub(ixO^S,iw) =  fRC(ixO^S,iw)
+        elsewhere(patchf(ixO^S) == -1)
+        wSub(ixO^S,iw) =  wLC(ixO^S,iw)
+        fSub(ixO^S,iw) =  fLC(ixO^S,iw)
+        endwhere
      endif
-    enddo
+  enddo
 
-    wSub(ixO^S,mag(idim)) = whll(ixO^S,mag(idim))
-    Cond_Bidimhll(ixO^S) = (dabs(wSub(ixO^S,mag(idim)))<=smalldouble)
+  wSub(ixO^S,mag(idim)) = whll(ixO^S,mag(idim))
+  Cond_Bidimhll(ixO^S) = (dabs(wSub(ixO^S,mag(idim)))<=smalldouble)
 
-    where(abs(patchf(ixO^S))==1)
+  where(abs(patchf(ixO^S))==1)
      Ratio_CD(ixO^S) = (cspeed(ixO^S)-vSub(ixO^S))&
                        /(cspeed(ixO^S)-lambdaCD(ixO^S))
      wCD(ixO^S,d_)   = wSub(ixO^S,d_)*Ratio_CD(ixO^S)
-    end where
-    {do ix^DB=ixOmin^DB,ixOmax^DB\}
+  end where
+  
+  {do ix^DB=ixOmin^DB,ixOmax^DB\}
       if(abs(patchf(ix^D))==1) then
        do n=1,srmhd_n_tracer
           iw = tracer(n)
           wCD(ix^D,iw) = wSub(ix^D,iw)*Ratio_CD(ix^D)
         end do
       end if
-    {end do\}
+  {end do\}
 
+! in case we have somewhere a normal component, need to distinguish
+  bxnozero : if(any(.not.Cond_Bidimhll(ixO^S)))then
 
-
-
-
-
-
-     ! in case we have somewhere a normal component, need to distinguish
-     bxnozero : if(any(.not.Cond_Bidimhll(ixO^S)))then
-
-     !==== Magnetic field ====!
-     do iw =mag(1),mag(ndir)
-      if(iw /= mag(idim))then
-       ! Transverse components
-       where(.not.Cond_Bidimhll(ixO^S)  .and. abs(patchf(ixO^S))==1)
-         ! case from eq 37
-         wCD(ixO^S,iw) = whll(ixO^S,iw)
-       elsewhere(Cond_Bidimhll(ixO^S) .and. abs(patchf(ixO^S))==1)
-         ! case from eq 53
-         wCD(ixO^S,iw) = wSub(ixO^S,iw) * Ratio_CD(ixO^S)
-       endwhere
+  !==== Magnetic field ====!
+  do iw =mag(1),mag(ndir)
+     if(iw /= mag(idim))then
+        ! Transverse components
+        where(.not.Cond_Bidimhll(ixO^S)  .and. abs(patchf(ixO^S))==1)
+          ! case from eq 37
+          wCD(ixO^S,iw) = whll(ixO^S,iw)
+        elsewhere(Cond_Bidimhll(ixO^S) .and. abs(patchf(ixO^S))==1)
+          ! case from eq 53
+          wCD(ixO^S,iw) = wSub(ixO^S,iw) * Ratio_CD(ixO^S)
+        endwhere
       else  !  Normal component
-       wCD(ixO^S,iw) = wSub(ixO^S,iw)
-      endif
-     enddo
+        wCD(ixO^S,iw) = wSub(ixO^S,iw)
+     endif
+  enddo
 
-     !====== velocities ========!
-     do idir = 1,ndir
-      if(idir /=idim)then
+  !====== velocities ========!
+  do idir = 1,ndir
+     if(idir /=idim)then
        ! Transverse components
        where(.not.Cond_Bidimhll(ixO^S)  .and. abs(patchf(ixO^S))==1)
         ! case from eq 38
@@ -327,59 +313,59 @@ if(any(.not.Cond_Bidimhll(ixO^S).and.Cond_patchf(ixO^S)))then
                        -Fhll(ixO^S,mag(idir)))/wCD(ixO^S,mag(idim))
        elsewhere(Cond_Bidimhll(ixO^S)  .and. abs(patchf(ixO^S))==1)
         ! unused case
-        vCD(ixO^S,mom(idir))=zero
+        vCD(ixO^S,mom(idir))=0.0d0
        endwhere
       else ! Normal component
-       where(abs(patchf(ixO^S))==1)
-        vCD(ixO^S,mom(idir))=lambdaCD(ixO^S)
-       endwhere
+        where(abs(patchf(ixO^S))==1)
+         vCD(ixO^S,mom(idir))=lambdaCD(ixO^S)
+        endwhere
       endif
-     enddo
-     ! enforce fallback strategy for case where characteristic velocity 
-     !  at contact
-     ! is unphysical
-     where(.not. Cond_Bidimhll(ixO^S)  &
+  enddo
+  
+  ! enforce fallback strategy for case where characteristic velocity 
+  !  at contact is unphysical
+  where(.not. Cond_Bidimhll(ixO^S)  &
            .and. sum(vCD(ixO^S,mom(:))**2.0d0,dim=ndim+1) > 1.0d0 &
            .and. abs(patchf(ixO^S))==1)
       patchf(ixO^S) = 3
-     endwhere
+  endwhere
 
-     where(.not.Cond_Bidimhll(ixO^S).and. abs(patchf(ixO^S))==1)
+ where(.not.Cond_Bidimhll(ixO^S).and. abs(patchf(ixO^S))==1)
       wCD(ixO^S,lfac_) = 1.0d0/dsqrt(1.0d0-sum(vCD(ixO^S,mom(:))**2.0d0,dim=ndim+1))
       VdotB(ixO^S) = sum(vCD(ixO^S,mom(:))*wCD(ixO^S,mag(:)),dim=ndim+1)
       !--- total Pressure from eq 40 ---!
       pCD(ixO^S)  = -lambdaCD(ixO^S)&
            *(Fhll(ixO^S,e_)+Fhll(ixO^S,d_)-VdotB(ixO^S)*wCD(ixO^S,mag(idim)))&
            +Fhll(ixO^S,mom(idim))+(wCD(ixO^S,mag(idim))/wCD(ixO^S,lfac_))**2.0d0
-
-     elsewhere(Cond_Bidimhll(ixO^S) .and. abs(patchf(ixO^S))==1)
+ elsewhere(Cond_Bidimhll(ixO^S) .and. abs(patchf(ixO^S))==1)
       !------ total Pressure from 48 ------!
       pCD(ixO^S)  = -(Fhll(ixO^S,e_)+Fhll(ixO^S,d_))*lambdaCD(ixO^S) &
                   + Fhll(ixO^S,mom(idim))
-     endwhere
+ endwhere
 
-     ! enforce fallback strategy for case where total pressure at contact
-     ! is unphysical (should never happen?)
-     where(pCD(ixO^S) <= zero.and. abs(patchf(ixO^S))==1)
+  ! enforce fallback strategy for case where total pressure at contact
+  ! is unphysical (should never happen?)
+  where(pCD(ixO^S) <= 0.0d0 .and. abs(patchf(ixO^S))==1)
       patchf(ixO^S) = 3
-     endwhere
-     !------- Momentum ------!
-     do iw =mom(1),mom(ndir)
-      if(iw /= mom(idim))then
-       where(.not.Cond_Bidimhll(ixO^S)   .and.  abs(patchf(ixO^S))==1)
+  endwhere
+  
+   !------- Momentum ------!
+  do iw =mom(1),mom(ndir)
+     if(iw /= mom(idim))then
+       where(.not.Cond_Bidimhll(ixO^S) .and. abs(patchf(ixO^S))==1)
         ! eq. 44 45
-        wCD(ixO^S,iw) = (cspeed(ixO^S)*wSub(ixO^S,iw)-fSub(ixO^S,iw)&
-                         -wCD(ixO^S,mag(idim))*&
-                   (wCD(ixO^S,iw-mom(1)+mag(1))/wCD(ixO^S,lfac_)**2.0d0&
-           +VdotB(ixO^S) * vCD(ixO^S,iw))) /(cspeed(ixO^S)-lambdaCD(ixO^S))
+         wCD(ixO^S,iw) = (cspeed(ixO^S)*wSub(ixO^S,iw)-fSub(ixO^S,iw)&
+                          -wCD(ixO^S,mag(idim))*&
+                    (wCD(ixO^S,iw-mom(1)+mag(1))/wCD(ixO^S,lfac_)**2.0d0&
+            +VdotB(ixO^S) * vCD(ixO^S,iw))) /(cspeed(ixO^S)-lambdaCD(ixO^S))
        elsewhere(Cond_Bidimhll(ixO^S) .and. abs(patchf(ixO^S))==1)
         ! eq. 51
-        wCD(ixO^S,iw) = wSub(ixO^S,iw) * Ratio_CD(ixO^S)
+         wCD(ixO^S,iw) = wSub(ixO^S,iw) * Ratio_CD(ixO^S)
        endwhere
-      endif
-     enddo
+     endif
+  enddo
 
-     where(.not.Cond_Bidimhll(ixO^S)   .and. abs(patchf(ixO^S))==1)
+  where(.not.Cond_Bidimhll(ixO^S) .and. abs(patchf(ixO^S))==1)
       !---- Tau Right combine 46 43----!
       wCD(ixO^S,e_) = (cspeed(ixO^S) * wSub(ixO^S,e_) &
                  + vSub(ixO^S) * wSub(ixO^S,d_) - wSub(ixO^S,mom(idim))&
@@ -388,7 +374,7 @@ if(any(.not.Cond_Bidimhll(ixO^S).and.Cond_patchf(ixO^S)))then
       !--- Sidim Right from eq 33 ---!
       wCD(ixO^S,mom(idim)) = (wCD(ixO^S,e_)+wCD(ixO^S,d_)+pCD(ixO^S))&
                   *lambdaCD(ixO^S)-VdotB(ixO^S)*wCD(ixO^S,mag(idim))
-     elsewhere(Cond_Bidimhll(ixO^S)  .and. abs(patchf(ixO^S))==1)
+  elsewhere(Cond_Bidimhll(ixO^S)  .and. abs(patchf(ixO^S))==1)
       !---- Tau Right combine 50 52----!
       wCD(ixO^S,e_) = (cspeed(ixO^S) * wSub(ixO^S,e_) &
                   + vSub(ixO^S) * wSub(ixO^S,d_) - wSub(ixO^S,mom(idim))&
@@ -400,7 +386,8 @@ if(any(.not.Cond_Bidimhll(ixO^S).and.Cond_patchf(ixO^S)))then
       !-- Not real lfac, but fill it anyway --!
       wCD(ixO^S,lfac_) = 1.0d0
       !-------------------!
-     endwhere
+  endwhere
+
 else ! bxnozero
   ! in case we have everywhere NO normal B component, no need to distinguish
   !---- Magnetic field ----!
@@ -445,7 +432,7 @@ else ! bxnozero
   do iw = mom(1),mom(ndir)
     if(iw /= mom(idim))Then
       where(abs(patchf(ixO^S))==1)
-        vCD(ixO^S,iw) = zero
+        vCD(ixO^S,iw) = 0.0d0
       endwhere
     else
       where(abs(patchf(ixO^S))==1)
@@ -463,7 +450,7 @@ do iw=1,nwflux
        f(ixO^S,iw)=fSub(ixO^S,iw)+cspeed(ixO^S)*(wCD(ixO^S,iw)-wsub(ixO^S,iw))
    endwhere
  else
-       f(ixO^S,iw)=zero
+       f(ixO^S,iw)=0.0d0
  end if
 end do
 
