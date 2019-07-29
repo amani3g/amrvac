@@ -161,13 +161,13 @@ contains
       E = [0.0d0, 0.0d0, 0.0d0]
 
       ! x is in cm, this corresponds to B = 10 T at 1 m
-      !B = 10 * 1d6 * [3d0 * x(1) * x(3), &
-      !     3d0 * x(2) * x(3), &
-      !     2d0 * x(3)**2 - x(1)**2 - x(2)**2] / &
-      !     (x(1)**2 + x(2)**2 + x(3)**2)**2.5d0
+      B = 10 * 1d6 * [3d0 * x(1) * x(3), &
+           3d0 * x(2) * x(3), &
+           2d0 * x(3)**2 - x(1)**2 - x(2)**2] / &
+           (x(1)**2 + x(2)**2 + x(3)**2)**2.5d0
 
       ! Dipole in spherical coordinates
-      B = 10 * 1d6 * [2*cos(x(2)), sin(x(2)), 0.0d0]/(x(1))**3.0d0
+      !B = 10 * 1d6 * [2*cos(x(2)), sin(x(2)), 0.0d0]/(x(1))**3.0d0
 
     case (8)
       ! X-null point
