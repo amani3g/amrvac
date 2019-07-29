@@ -2,7 +2,7 @@
         autoconvert   = f
         saveprim      = T
         nwauxio       = 0
-        base_filename = 'output/test_dipole_cartesian'
+        base_filename = 'output/test_dipole_cartesian_e_charge_mass'
         convert_type  = 'vtuBmpi'
  /
 

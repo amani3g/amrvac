@@ -4,8 +4,8 @@ module mod_usr
 
   implicit none
 
-  double precision :: charge = 1.0d0 !1.60218d-19 ![C]
-  double precision :: mass = 1.0d0 !9.10938d-31 ![kg]
+  double precision :: charge = 1.60218d-19 ![C]
+  double precision :: mass = 9.10938d-31 ![kg]
 
   ! Initial position (in m)
   double precision :: x0(3) = [0.0d0, 0.0d0, 0.0d0]
