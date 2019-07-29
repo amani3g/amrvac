@@ -166,7 +166,7 @@ contains
       !     (x(1)**2 + x(2)**2 + x(3)**2)**2.5d0
 
       ! Dipole in spherical coordinates
-      B = 10 * 1d6 * [2*cos(x(2)), sin(x(2)), 0.0]/(x(1))**3.0d0
+      B = 10 * 1d6 * [2*cos(x(2)), sin(x(2)), 0.0d0]/(x(1))**3.0d0
 
     case (8)
       ! X-null point
@@ -214,7 +214,7 @@ contains
        if (physics_type_particles /= 'gca') then
           ! Assume B = 10 T, and v_x = 0 initially
           
-          
+
           x(1) = x(1) + abs(v(2)) * m / (q * 10.0d0)
 
 
