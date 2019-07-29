@@ -593,6 +593,11 @@ contains
         c(r_) = a(phi_)*b(z_) - a(z_)*b(phi_)
         c(phi_) = a(z_)*b(r_) - a(r_)*b(z_)
         c(z_) = a(r_)*b(phi_) - a(phi_)*b(r_)
+      case ('spherical')
+        c(r_) = a(theta_)*b(phi_) - a(phi_)*b(theta_)
+        c(theta_) = a(r_)*b(phi_) - a(phi_)*b(r_)
+        c(phi_) = a(r_)*b(theta_) - a(theta_)*b(r_)
+        
       case default
         call mpistop('geometry not implemented in cross(a,b,c)')
       end select
