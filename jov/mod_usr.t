@@ -4,13 +4,14 @@ module mod_usr
 
   implicit none
 
-  double precision :: charge = 1.60218d-19 ![C]
-  double precision :: mass = 9.10938d-31 ![kg]
+  double precision :: charge = 1.0d0 !1.60218d-19 ![C]
+  double precision :: mass = 1.0d0 !9.10938d-31 ![kg]
 
   ! Initial position (in m)
   double precision :: x0(3) = [0.0d0, 0.0d0, 0.0d0]
 
-  ! Initial velocity (in m/s)
+  ! Initial velocity (in m/s) 
+  ! the speed of light const_c is defined in cgs in amrvac !
   double precision :: v0(3) = [0.0d0, 0.0d0, 0.0d0]
 
   ! Maxwellian velocity (per component vx, vy, vz)
@@ -213,11 +214,7 @@ contains
        q = (charge * ipart) / n_particles
        if (physics_type_particles /= 'gca') then
           ! Assume B = 10 T, and v_x = 0 initially
-          
-
           x(1) = x(1) + abs(v(2)) * m / (q * 10.0d0)
-
-
        end if
     case (8)
        ! Distribute over circle, velocity inwards. Avoid pi/4.
