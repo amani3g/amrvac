@@ -4,8 +4,8 @@ module mod_usr
 
   implicit none
 
-  double precision :: charge = 1.0d0
-  double precision :: mass = 1.0d0
+  double precision :: charge = 1.60218d-19 ![C]
+  double precision :: mass = 9.10938d-31 ![kg]
 
   ! Initial position (in m)
   double precision :: x0(3) = [0.0d0, 0.0d0, 0.0d0]
@@ -36,7 +36,7 @@ contains
     usr_create_particles => generate_particles
     usr_particle_fields => set_custom_field
 
-    call set_coordinate_system("Cartesian_3D")
+    call set_coordinate_system("Spherical_3d")
     call mhd_activate()
     call params_read(par_files)
 
@@ -158,11 +158,16 @@ contains
     case (7)
       ! Magnetic dipole (run up to t = 100)
       E = [0.0d0, 0.0d0, 0.0d0]
+
       ! x is in cm, this corresponds to B = 10 T at 1 m
-      B = 10 * 1d6 * [3d0 * x(1) * x(3), &
-           3d0 * x(2) * x(3), &
-           2d0 * x(3)**2 - x(1)**2 - x(2)**2] / &
-           (x(1)**2 + x(2)**2 + x(3)**2)**2.5d0
+      !B = 10 * 1d6 * [3d0 * x(1) * x(3), &
+      !     3d0 * x(2) * x(3), &
+      !     2d0 * x(3)**2 - x(1)**2 - x(2)**2] / &
+      !     (x(1)**2 + x(2)**2 + x(3)**2)**2.5d0
+
+      ! Dipole in spherical coordinates
+      B = 10 * 1d6 * [2*cos(x(2)), sin(x(2)), 0.0]/(x(1))**3.0d0
+
     case (8)
       ! X-null point
       E = 0.0d0
@@ -203,12 +208,16 @@ contains
        print *, ipart, v
     case (5)
        v = (v0 * ipart) / n_particles
-    case (7)
+    case (7) ! Dipole case
        v = v0
        q = (charge * ipart) / n_particles
        if (physics_type_particles /= 'gca') then
           ! Assume B = 10 T, and v_x = 0 initially
+          
+          
           x(1) = x(1) + abs(v(2)) * m / (q * 10.0d0)
+
+
        end if
     case (8)
        ! Distribute over circle, velocity inwards. Avoid pi/4.
