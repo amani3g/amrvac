@@ -31,8 +31,8 @@ def write_jrm09():
 
 	#Solve for Vectors
 	r_vec = np.linspace(rj, 30*rj, 22)
-	theta_vec = solve_jrm09.jrm09(rj)[6] 
-	phi_vec = solve_jrm09.jrm09(rj)[7]
+	theta_vec = solve_b.jrm09(rj)[6] 
+	phi_vec = solve_b.jrm09(rj)[7]
 
 	print('Writing csvs!')
 	# 1: Create JRM09_Vectors.csv
@@ -59,7 +59,7 @@ def write_jrm09():
 		# Create a folder r_surface
 		os.mkdir(r_surface_dir)
 		# Solve for Br, Btheta, Bphi, Bmag
-		mag, Br, Btheta, Bphi, Bmag, Vp, lat, lon = solve_jrm09.jrm09(r)
+		mag, Br, Btheta, Bphi, Bmag, Vp, lat, lon = solve_b.jrm09(r)
 
 		# Write Br, Btheta, Bphi, Bmag to csv
 
@@ -134,8 +134,8 @@ def write_dipole():
 
 	#Solve for Vectors
 	r_vec = np.linspace(rj, 30*rj, 22)
-	theta_vec = solve_jrm09.dipole(rj)[4] 
-	phi_vec = solve_jrm09.dipole(rj)[5]
+	theta_vec = solve_b.dipole(rj)[4] 
+	phi_vec = solve_b.dipole(rj)[5]
 
 	print('Writing csvs!')
 	# 1: Create dipole_vectors.csv
@@ -162,7 +162,7 @@ def write_dipole():
 		# Create a folder r_surface
 		os.mkdir(r_surface_dir)
 		# Solve for Br, Btheta, Bphi, Bmag
-		Br, Btheta, Bphi, Bmag, lat, lon = solve_jrm09.dipole(r)
+		Br, Btheta, Bphi, Bmag, lat, lon = solve_b.dipole(r)
 
 		# Write Br, Btheta, Bphi, Bmag to csv
 
