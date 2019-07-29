@@ -37,7 +37,7 @@ contains
     usr_create_particles => generate_particles
     usr_particle_fields => set_custom_field
 
-    call set_coordinate_system("spherical_3D")
+    call set_coordinate_system("Cartesian_3D")
     call mhd_activate()
     call params_read(par_files)
 

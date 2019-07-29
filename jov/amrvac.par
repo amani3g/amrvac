@@ -2,7 +2,7 @@
         autoconvert   = f
         saveprim      = T
         nwauxio       = 0
-        base_filename = 'output/test_dipole'
+        base_filename = 'output/test_dipole_cartesian'
         convert_type  = 'vtuBmpi'
  /
 
@@ -12,7 +12,7 @@
  /
 
  &stoplist
-        time_max = 1.0
+        time_max = 100.0
  /
 
  &methodlist
@@ -23,11 +23,11 @@
 
  &boundlist
         typeboundary_min1  = 8*'periodic'
-        typeboundary_min2  = 8*'pole'
-        typeboundary_min3  = 8*'asymm'
+        typeboundary_min2  = 8*'periodic'
+        typeboundary_min3  = 8*'periodic'
         typeboundary_max1  = 8*'periodic'
-        typeboundary_max2  = 8*'pole'
-        typeboundary_max3  = 8*'asymm'
+        typeboundary_max2  = 8*'periodic'
+        typeboundary_max3  = 8*'periodic'
  /
 
  &meshlist
@@ -40,8 +40,8 @@
         block_nx1 = 64
         block_nx2 = 64
         block_nx3 = 64
-        xprobmin1     = 0.0d0
-        xprobmax1     = 150.0d0
+        xprobmin1     = -150.0d7
+        xprobmax1     = 150.0d7
         xprobmin2     = 0.0d0
         xprobmax2     = 3.14d0
         xprobmin3     = -3.14d0
@@ -59,13 +59,13 @@
 
  &particles_list
         physics_type_particles='gca'
-        num_particles=1
+        num_particles=10
         dtsave_particles = 1.0d-2
         write_ensemble = f
         write_individual = t
-        npayload=3
+        npayload=14
         particles_eta=0.0d-4
-        const_dt_particles = 5d-3
+        const_dt_particles = 5d-4
  /
 
  &my_list
