@@ -24,6 +24,15 @@ module mod_usr
   ! Use an analytic field instead of an interpolated one
   logical :: use_analytic_field = .false.
 
+  ! Dipole csv file name 
+
+  ! Coordinate vectors of 3d bfield grid solution
+  ! r_vec(22)
+  ! theta_vec(22)
+  ! phi_vec(22)
+
+
+
 contains
 
   subroutine usr_init()
@@ -49,6 +58,11 @@ contains
       usr_particle_analytic => get_analytic_field
     end if
 
+    ! initialize coordinate vectors
+    ! open coordinate csv
+    ! do i, 22
+      ! read(*,) r_vec[i], theta_vec[i], phi_vec[i]
+    !print r_vec, theta_vec, phi_vec
   end subroutine usr_init
 
   !> Read parameters from a file
@@ -110,6 +124,8 @@ contains
     logical, intent(out)          :: follow(n_particles)
     integer                       :: n
 
+    ! declare: i, j, k, r_index, theta_index, phi_index as integers, r_delta, theta_delta, phi_delta as 22long arrays, x_sphere as 3long array
+
     do n = 1, n_particles
       call get_particle(x(:, n), v(:, n), q(n), m(n), n, n_particles, iprob)
     end do
@@ -131,32 +147,6 @@ contains
 
     select case (iprob)
     case (1)
-      ! Linear acceleration
-      E = [0.0d0, 0.0d0, 1.0d0]
-      B = [0.0d0, 0.0d0, 1.0d0]
-    case (2)
-      ! Pure gyration
-      E = [0.0d0, 0.0d0, 0.0d0]
-      B = [0.0d0, 0.0d0, 1.0d0]
-    case (3)
-      ! Force-free (this only works for one particle)
-      E = [-v0(2), 0.0d0, 0.0d0]
-      B = [0.0d0, 0.0d0, 1.0d0]
-    case (4)
-      ! ExB
-      E = [1.0d0, 0.0d0, 0.0d0]
-      B = [0.0d0, 0.0d0, 1.0d0]
-    case (5)
-      ! Gradient in B
-      E = [0.0d0, 0.0d0, 0.0d0]
-      B = [0.0d0, 0.0d0, (1.0d0 + 1.0d-2 * x(1))]
-    case (6)
-      ! Magnetic mirror (requires longer time a.t.m.)
-      E = [0.0d0, 0.0d0, 0.0d0]
-      ! x is in cm
-      !B = [-x(1) * x(3), -x(2) * x(3), 1.0d4 + x(3)**2] * 1.0d-4
-      B = 1.0d6 * [-x(1) * x(3), -x(2) * x(3), 1.0d18 + x(3)**2] * 1.0d-18
-    case (7)
       ! Magnetic dipole (run up to t = 100)
       E = [0.0d0, 0.0d0, 0.0d0]
 
@@ -166,19 +156,85 @@ contains
            2d0 * x(3)**2 - x(1)**2 - x(2)**2] / &
            (x(1)**2 + x(2)**2 + x(3)**2)**2.5d0
 
-      ! Dipole in spherical coordinates
-      !B = 10 * 1d6 * [2*cos(x(2)), sin(x(2)), 0.0d0]/(x(1))**3.0d0
-
-    case (8)
-      ! X-null point
-      E = 0.0d0
-      B = [x(2), x(1), 0.0d0] * 1d-2
-    case (9)
-      ! electromagnetic two-body problem. x is in cm 
-      ! Q=-1 (attracting central electron surrounded by positron)
-      E = -1.0d0 * 1.0d14 * [x(1), x(2), 0.0d0] / &
-           (x(1)**2 + x(2)**2 + x(3)**2)**(3.0d0/2.0d0)
+    case(2)
+      E = [0.0d0, 0.0d0, 0.0d0]
       B = [0.0d0, 0.0d0, 0.0d0]
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! convert x -> x_spherical
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      !x_spherical = []
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Get index of the closest position value
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      ! loop through the r_vec
+      ! do i = 1, 22
+        ! calculate the difference between r_vec[i] and x_spherical(1)
+        ! save the difference in r_delta array
+
+      ! find the minimun value of r_delta array
+
+      ! loop through the values of r_delta, and get the index
+      ! do i = 1, 22
+        ! if the minimum value is equal to r_delta[i]
+            ! set r_index = i
+
+      ! loop through the theta_vec
+      ! do j = 1, 22
+        ! calculate the difference between theta_vec[j] and x_spherical(2)
+        ! save the difference in theta_delta array
+
+      ! find the minimun value of theta_delta array
+
+      ! loop through the values of theta_delta, and get the index
+      ! do j = 1, 22
+        ! if the minimum value is equal to theta_delta[j]
+            ! set theta_index = j
+
+      ! loop through the phi_vec
+      ! do k = 1, 22
+        ! calculate the difference between phi_vec[k] and x_spherical(3)
+        ! save the difference in phi_delta array
+
+      ! find the minimun value of phi_delta array
+
+      ! loop through the values of phi_delta, and get the index
+      ! do k = 1, 22
+        ! if the minimum value is equal to phi_delta[k]
+            ! set phi_index = k
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Get B value at that position from csv!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      ! first find the ith directory in bfield_grid_directory
+      ! ith_dir = 'jrm09_spherical_grid/'+str(i)
+
+      ! open ith_dir/Br.csv
+      ! Br_file = ith_dir + '/Br.csv'
+      ! get the Br[jth, kth] value
+      ! B_spherical(1) = Br
+
+      ! open ith_dir/Btheta.csv
+      ! Btheta_file = ith_dir + '/Btheta.csv'
+      ! get the jth, kth value
+      ! B_spherical(2) = Btheta
+
+      ! open ith_dir/Bphi.csv
+      ! Bphi_file = ith_dir + '/Bphi.csv'
+      ! get the jth, kth value
+      ! B_spherical(3) = Bphi
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Convert B_spherical to B 
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      ! Return B in cartesian coordinates!
+      ! B = []
+
     case default
       call mpistop("Unknown value for iprob")
     end select
@@ -201,26 +257,28 @@ contains
     x = x0
 
     select case (iprob)
-    case (4)
-       ! Add Maxwellian velocity. Random numbers come in pairs of two
-       tmp_vec(1:2) = rng%two_normals()
-       tmp_vec(3:4) = rng%two_normals()
-       v = v0 + tmp_vec(1:3) * maxwellian_velocity
-       print *, ipart, v
-    case (5)
-       v = (v0 * ipart) / n_particles
-    case (7) ! Dipole case
+    
+    case (1) ! Dipole case
        v = v0
        q = (charge * ipart) / n_particles
        if (physics_type_particles /= 'gca') then
           ! Assume B = 10 T, and v_x = 0 initially
           x(1) = x(1) + abs(v(2)) * m / (q * 10.0d0)
        end if
-    case (8)
-       ! Distribute over circle, velocity inwards. Avoid pi/4.
-       phi = ((ipart+0.125d0) * 2 * acos(-1.0d0)) / n_particles
-       x = norm2(x0) * [cos(phi), sin(phi), 0.0d0]
-       v = -x * norm2(v0)/norm2(x0)
+
+    !case (4)
+    !   ! Add Maxwellian velocity. Random numbers come in pairs of two
+    !   tmp_vec(1:2) = rng%two_normals()
+    !   tmp_vec(3:4) = rng%two_normals()
+    !   v = v0 + tmp_vec(1:3) * maxwellian_velocity
+    !   print *, ipart, v
+    !case (5)
+    !   v = (v0 * ipart) / n_particles
+    !case (8)
+    !   ! Distribute over circle, velocity inwards. Avoid pi/4.
+    !   phi = ((ipart+0.125d0) * 2 * acos(-1.0d0)) / n_particles
+    !   x = norm2(x0) * [cos(phi), sin(phi), 0.0d0]
+    !   v = -x * norm2(v0)/norm2(x0)
     case default
        v = v0
     end select
@@ -267,5 +325,15 @@ contains
       call mpistop("get_analytic_field: unknown variable index")
     end if
   end subroutine get_analytic_field
+
+  subroutine get_coordvectors(r, theta, phi)
+    double precision, intent(out) :: r(22)
+    double precision, intent(out) :: theta(22)
+    double precision, intent(out) :: phi(22)
+
+
+
+
+  end subroutine get_coordvectors
 
 end module mod_usr
