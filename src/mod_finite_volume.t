@@ -242,7 +242,8 @@ contains
          ixI^L,ixO^L,1,nw,qtC,wCT,qt,wnew,x,.false.)
 
     ! check and optionally correct unphysical values
-    call phys_handle_small_values(.false.,wnew,x,ixI^L,ixO^L,'finite_volume')
+    !call phys_handle_small_values(.false.,wnew,x,ixI^L,ixO^L,'finite_volume')
+    call phys_handle_small_values(.true.,wnew,x,ixI^L,ixO^L,'finite_volume')
 
   end associate staggered
   end associate
