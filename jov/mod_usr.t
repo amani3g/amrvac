@@ -124,7 +124,7 @@ contains
     logical, intent(out)          :: follow(n_particles)
     integer                       :: n
 
-    ! declare: i, j, k, r_index, theta_index, phi_index as integers, r_delta, theta_delta, phi_delta as 22long arrays, x_sphere as 3long array
+
 
     do n = 1, n_particles
       call get_particle(x(:, n), v(:, n), q(n), m(n), n, n_particles, iprob)
@@ -145,18 +145,40 @@ contains
     double precision, intent(in)  :: x(3)
     double precision, intent(out) :: E(3), B(3)
 
+    ! declare: i, j, k, r_index, theta_index, phi_index as integers
+    ! declare: r_delta, theta_delta, phi_delta as 22long arrays, 
+    ! declare: x_sphere, B_sphere as 3long array
+    double precision :: x_sphere(3), B_sphere(3)    
+
     select case (iprob)
     case (1)
       ! Magnetic dipole (run up to t = 100)
       E = [0.0d0, 0.0d0, 0.0d0]
 
       ! x is in cm, this corresponds to B = 10 T at 1 m
+      ! M = 10 G
+      ! qM/m = 
       B = 10 * 1d6 * [3d0 * x(1) * x(3), &
            3d0 * x(2) * x(3), &
            2d0 * x(3)**2 - x(1)**2 - x(2)**2] / &
            (x(1)**2 + x(2)**2 + x(3)**2)**2.5d0
 
-    case(2)
+    case (2)
+      ! Magnetic dipole (run up to t = 100)
+      ! Checkin to make sure there are no issues with 
+      ! translating between cartesian to spherical coordinates
+      E = [0.0d0, 0.0d0, 0.0d0]
+
+      ! Convert x to x_spherical
+      x_sphere = [(x(1)**2 + x(2)**2 + x(3)**2)**.5, acos(x(3)/x_sphere(1)), atan2(x(2),x(1))]
+
+      ! Calculate B in spherical coordinates
+      B_sphere = 4.170d-4 * ((Rj)**3) * [2*cos(x_sphere(2)), sin(x_sphere(2)), 0.0d0] / (x_sphere(1)**3.0d0)
+
+      ! Convert B in spherical coordinates to B in cartesian
+      B = B_sphere(1)* [cos(B_sphere(3))*sin(B_sphere(2)), sin(B_sphere(3))*sin(B_sphere(2)), cos(B_sphere(2))]
+
+    case(3)
       E = [0.0d0, 0.0d0, 0.0d0]
       B = [0.0d0, 0.0d0, 0.0d0]
 
@@ -235,6 +257,8 @@ contains
       ! Return B in cartesian coordinates!
       ! B = []
 
+
+
     case default
       call mpistop("Unknown value for iprob")
     end select
@@ -263,7 +287,9 @@ contains
        q = (charge * ipart) / n_particles
        if (physics_type_particles /= 'gca') then
           ! Assume B = 10 T, and v_x = 0 initially
+          ! x = vx + |vy|*m/10q
           x(1) = x(1) + abs(v(2)) * m / (q * 10.0d0)
+
        end if
 
     !case (4)
