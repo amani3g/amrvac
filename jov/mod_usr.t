@@ -4,8 +4,8 @@ module mod_usr
 
   implicit none
 
-  double precision :: charge = 1.60218d-19 ![C]
-  double precision :: mass = 9.10938d-31 ![kg]
+  double precision :: charge = 1.0d0 !1.60218d-19 ![C]
+  double precision :: mass = 1.0d0 !9.10938d-31 ![kg]
 
   ! Initial position (in m)
   double precision :: x0(3) = [0.0d0, 0.0d0, 0.0d0]
@@ -25,6 +25,7 @@ module mod_usr
   logical :: use_analytic_field = .false.
 
   ! Dipole csv file name 
+  ! character*(), parameter :: dipole_bcsv = '.csv'
 
   ! Coordinate vectors of 3d bfield grid solution
   ! r_vec(22)
@@ -170,13 +171,19 @@ contains
       E = [0.0d0, 0.0d0, 0.0d0]
 
       ! Convert x to x_spherical
-      x_sphere = [(x(1)**2 + x(2)**2 + x(3)**2)**.5, acos(x(3)/x_sphere(1)), atan2(x(2),x(1))]
+      x_sphere = [(x(1)**2 + x(2)**2 + x(3)**2)**.5, acos(x(3)/((x(1)**2 + x(2)**2 + x(3)**2)**.5)), atan2(x(2),x(1))]
+      !print*, x_sphere
+      ! acos returning a Nan value! 
 
       ! Calculate B in spherical coordinates
       B_sphere = 10 * 1d6 * [2*cos(x_sphere(2)), sin(x_sphere(2)), 0.0d0] / (x_sphere(1)**3.0d0)
 
       ! Convert B in spherical coordinates to B in cartesian
       B = B_sphere(1)* [cos(B_sphere(3))*sin(B_sphere(2)), sin(B_sphere(3))*sin(B_sphere(2)), cos(B_sphere(2))]
+
+      !!!!!!!!!!!!!!!!!!!!!
+      ! Segmentatin Error !
+      !!!!!!!!!!!!!!!!!!!!!
 
     case(3)
       E = [0.0d0, 0.0d0, 0.0d0]
@@ -186,7 +193,7 @@ contains
       ! convert x -> x_spherical
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      !x_spherical = []
+      !x_sphere = [(x(1)**2 + x(2)**2 + x(3)**2)**.5, acos(x(3)/x_sphere(1)), atan2(x(2),x(1))]
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Get index of the closest position value
@@ -283,6 +290,15 @@ contains
     select case (iprob)
     
     case (1) ! Dipole case
+       v = v0
+       q = (charge * ipart) / n_particles
+       if (physics_type_particles /= 'gca') then
+          ! Assume B = 10 T, and v_x = 0 initially
+          ! x = vx + |vy|*m/10q
+          x(1) = x(1) + abs(v(2)) * m / (q * 10.0d0)
+
+       end if
+    case (2) ! Dipole case
        v = v0
        q = (charge * ipart) / n_particles
        if (physics_type_particles /= 'gca') then

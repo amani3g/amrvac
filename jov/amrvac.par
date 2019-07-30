@@ -59,7 +59,7 @@
 
  &particles_list
         physics_type_particles='gca'
-        num_particles=10
+        num_particles= 10 !10
         dtsave_particles = 1.0d-2
         write_ensemble = f
         write_individual = t
