@@ -173,7 +173,7 @@ contains
       x_sphere = [(x(1)**2 + x(2)**2 + x(3)**2)**.5, acos(x(3)/x_sphere(1)), atan2(x(2),x(1))]
 
       ! Calculate B in spherical coordinates
-      B_sphere = 4.170d-4 * ((Rj)**3) * [2*cos(x_sphere(2)), sin(x_sphere(2)), 0.0d0] / (x_sphere(1)**3.0d0)
+      B_sphere = 10 * 1d6 * [2*cos(x_sphere(2)), sin(x_sphere(2)), 0.0d0] / (x_sphere(1)**3.0d0)
 
       ! Convert B in spherical coordinates to B in cartesian
       B = B_sphere(1)* [cos(B_sphere(3))*sin(B_sphere(2)), sin(B_sphere(3))*sin(B_sphere(2)), cos(B_sphere(2))]
