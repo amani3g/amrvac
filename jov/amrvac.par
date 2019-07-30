@@ -2,7 +2,7 @@
         autoconvert   = f
         saveprim      = T
         nwauxio       = 0
-        base_filename = 'output/iprob_2'
+        base_filename = 'output/iprob_2_debug'
         convert_type  = 'vtuBmpi'
  /
 

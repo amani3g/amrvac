@@ -22,16 +22,15 @@ module mod_usr
   double precision :: force_B0(3) = [not_used_value, 0.0d0, 0.0d0]
 
   ! Use an analytic field instead of an interpolated one
-  logical :: use_analytic_field = .false.
+  logical :: use_analytic_field = .false. !leave false for guiding center approximation
+  ! If false, then in each cell of the grid the value of the grid will be interpolated
+  ! If true, it will just read the x value that it's given
 
-  ! Dipole csv file name 
-  ! character*(), parameter :: dipole_bcsv = '.csv'
+  ! Dipole Coordinates csv file name 
+  ! character*(30), parameter :: dipole_coord_bcsv = 'dipole_grid/dipole_vectors.csv'
 
   ! Coordinate vectors of 3d bfield grid solution
-  ! r_vec(22)
-  ! theta_vec(22)
-  ! phi_vec(22)
-
+  ! double precision :: r_vec(22), theta_vec(22), phi_vec(22)
 
 
 contains
@@ -42,6 +41,9 @@ contains
     unit_length        = 1.d0
     unit_numberdensity = 1.d0
     unit_velocity      = 1.0d0
+
+    !declare integer i
+    ! integer :: i
 
     usr_init_one_grid => initonegrid_usr
     usr_create_particles => generate_particles
@@ -61,8 +63,9 @@ contains
 
     ! initialize coordinate vectors
     ! open coordinate csv
-    ! do i, 22
-      ! read(*,) r_vec[i], theta_vec[i], phi_vec[i]
+    ! open(1, file = dipole_coord_bcsv)
+    ! do i = 1, 22
+    !  read(1,*) r_vec[i], theta_vec[i], phi_vec[i]
     !print r_vec, theta_vec, phi_vec
   end subroutine usr_init
 
@@ -125,8 +128,6 @@ contains
     logical, intent(out)          :: follow(n_particles)
     integer                       :: n
 
-
-
     do n = 1, n_particles
       call get_particle(x(:, n), v(:, n), q(n), m(n), n, n_particles, iprob)
     end do
@@ -147,9 +148,17 @@ contains
     double precision, intent(out) :: E(3), B(3)
 
     ! declare: i, j, k, r_index, theta_index, phi_index as integers
+    !integer :: i, j, k, r_index, theta_index, phi_index
     ! declare: r_delta, theta_delta, phi_delta as 22long arrays, 
+    !double precision :: r_delta(22), theta_delta(22), phi_delta(22)
     ! declare: x_sphere, B_sphere as 3long array
-    double precision :: x_sphere(3), B_sphere(3)    
+    double precision :: x_sphere(3), B_sphere(3)
+    ! declare r_min, theta_min, phi_min as double precision
+    !double precision :: r_min, theta_min, phi_min    
+    ! character formater for bfield_grid/##_surface
+    !character(8) :: fmt 
+    !character(2) :: ichar
+
 
     select case (iprob)
     case (1)
@@ -157,12 +166,13 @@ contains
       E = [0.0d0, 0.0d0, 0.0d0]
 
       ! x is in cm, this corresponds to B = 10 T at 1 m
-      ! M = 10 G
+      ! M = 10 G * 10^4 T/m * 10^2 cm/m
       ! qM/m = 
       B = 10 * 1d6 * [3d0 * x(1) * x(3), &
            3d0 * x(2) * x(3), &
            2d0 * x(3)**2 - x(1)**2 - x(2)**2] / &
            (x(1)**2 + x(2)**2 + x(3)**2)**2.5d0
+      ! print*, B
 
     case (2)
       ! Magnetic dipole (run up to t = 100)
@@ -172,14 +182,16 @@ contains
 
       ! Convert x to x_spherical
       x_sphere = [(x(1)**2 + x(2)**2 + x(3)**2)**.5, acos(x(3)/((x(1)**2 + x(2)**2 + x(3)**2)**.5)), atan2(x(2),x(1))]
-      !print*, x_sphere
-      ! acos returning a Nan value! 
+      ! print*, x_sphere(2) -> order 1 (between 0 -> pi)
+      !print *, x_sphere(1)
 
       ! Calculate B in spherical coordinates
-      B_sphere = 10 * 1d6 * [2*cos(x_sphere(2)), sin(x_sphere(2)), 0.0d0] / (x_sphere(1)**3.0d0)
+      B_sphere = 10 * 1d6 * [2*cos(x_sphere(2)), sin(x_sphere(2)), 0.0d0] / (x_sphere(1)**3.0d0) ! x_sphere ~10^9 x_sphere^3 ~10^27
 
       ! Convert B in spherical coordinates to B in cartesian
+      ! y is zero here!
       B = B_sphere(1)* [cos(B_sphere(3))*sin(B_sphere(2)), sin(B_sphere(3))*sin(B_sphere(2)), cos(B_sphere(2))]
+      ! print*, B
 
       !!!!!!!!!!!!!!!!!!!!!
       ! Segmentatin Error !
@@ -193,47 +205,70 @@ contains
       ! convert x -> x_spherical
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      !x_sphere = [(x(1)**2 + x(2)**2 + x(3)**2)**.5, acos(x(3)/x_sphere(1)), atan2(x(2),x(1))]
+      !x_sphere = [(x(1)**2 + x(2)**2 + x(3)**2)**.5, acos(x(3)/((x(1)**2 + x(2)**2 + x(3)**2)**.5)), atan2(x(2),x(1))]
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Get index of the closest position value
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       ! loop through the r_vec
-      ! do i = 1, 22
-        ! calculate the difference between r_vec[i] and x_spherical(1)
+
+      !do i = 1, 22
+        ! calculate the absolute value of the difference between r_vec[i] and x_spherical(1)
         ! save the difference in r_delta array
+      !  r_delta[i] = ABS(r_vec[i]-x_spherical(1))
+      !enddo
 
       ! find the minimun value of r_delta array
+      !r_min = MIN(r_delta)
 
       ! loop through the values of r_delta, and get the index
-      ! do i = 1, 22
+      !do i = 1, 22
         ! if the minimum value is equal to r_delta[i]
-            ! set r_index = i
+      !  if (r_delta[i] == r_min) then
+          ! set r_index = i
+      !    r_index = i
+      !  endif
+      !enddo
+            
 
       ! loop through the theta_vec
-      ! do j = 1, 22
-        ! calculate the difference between theta_vec[j] and x_spherical(2)
+      !do j = 1,22
+        ! calculate the absolute difference between theta_vec[j] and x_spherical(2)
         ! save the difference in theta_delta array
+      !  theta_delta[j] = ABS(theta_vec[j]-x_spherical(2))
+      !enddo
 
       ! find the minimun value of theta_delta array
+      !theta_min = MIN(theta_delta)
 
       ! loop through the values of theta_delta, and get the index
-      ! do j = 1, 22
+      !do j= 1,22
         ! if the minimum value is equal to theta_delta[j]
-            ! set theta_index = j
-
+      !  if (theta_delta[j] == theta_min) then
+          ! set theta_index = j
+      !    theta_index = j
+      !  endif
+      !enddo
+ 
       ! loop through the phi_vec
-      ! do k = 1, 22
+      !do k = 1,22
         ! calculate the difference between phi_vec[k] and x_spherical(3)
         ! save the difference in phi_delta array
+      !  phi_delta[k] = ABS(phi_vec[k]-x_spherical(3))
+      !enddo
 
       ! find the minimun value of phi_delta array
+      !phi_min = MIN(phi_delta)
 
       ! loop through the values of phi_delta, and get the index
-      ! do k = 1, 22
+      !do k = 1,22
         ! if the minimum value is equal to phi_delta[k]
-            ! set phi_index = k
+      !  if (phi_delta[k] == phi_min) then
+          ! set phi_index = k
+      !    phi_index = k
+      !  endif
+      !enddo
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Get B value at that position from csv!
@@ -241,6 +276,10 @@ contains
 
       ! first find the ith directory in bfield_grid_directory
       ! ith_dir = 'jrm09_spherical_grid/'+str(i)
+      ! format ith num
+      !fmt = '(I2.2)' ! integer of width 2 with zeros at the left
+      !rnum = r_vec[r_index]/7.1492000d7
+
 
       ! open ith_dir/Br.csv
       ! Br_file = ith_dir + '/Br.csv'
@@ -303,7 +342,7 @@ contains
        q = (charge * ipart) / n_particles
        if (physics_type_particles /= 'gca') then
           ! Assume B = 10 T, and v_x = 0 initially
-          ! x = vx + |vy|*m/10q
+          ! x = vx + |vy|* m/ M * q -> offset probably to put on orbit
           x(1) = x(1) + abs(v(2)) * m / (q * 10.0d0)
 
        end if
@@ -357,6 +396,8 @@ contains
     double precision, intent(out) :: vec(ndir)
     double precision              :: E(3), B(3)
 
+    ! Get the field analytically and put it on the grid
+
     call get_field(x, E, B)
 
     if (ix(1) == bp(1)) then
@@ -367,15 +408,4 @@ contains
       call mpistop("get_analytic_field: unknown variable index")
     end if
   end subroutine get_analytic_field
-
-  subroutine get_coordvectors(r, theta, phi)
-    double precision, intent(out) :: r(22)
-    double precision, intent(out) :: theta(22)
-    double precision, intent(out) :: phi(22)
-
-
-
-
-  end subroutine get_coordvectors
-
 end module mod_usr
