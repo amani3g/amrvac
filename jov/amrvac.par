@@ -40,12 +40,12 @@
         block_nx1 = 64
         block_nx2 = 64
         block_nx3 = 64
-        xprobmin1     = -150.0d7
-        xprobmax1     = 150.0d7
-        xprobmin2     = -150.0d7
-        xprobmax2     = 150.0d7
-        xprobmin3     = -150.0d7
-        xprobmax3     = 150.0d0
+        xprobmin1     = -150.0d8
+        xprobmax1     = 150.0d8
+        xprobmin2     = -150.0d8
+        xprobmax2     = 150.0d8
+        xprobmin3     = -150.0d8
+        xprobmax3     = 150.0d8
  /
 
  &paramlist
