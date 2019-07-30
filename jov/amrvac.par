@@ -2,7 +2,7 @@
         autoconvert   = f
         saveprim      = T
         nwauxio       = 0
-        base_filename = 'output/iprob_2_debug'
+        base_filename = 'output/iprob_1'
         convert_type  = 'vtuBmpi'
  /
 
@@ -31,7 +31,7 @@
  /
 
  &meshlist
-        iprob = 2 !dipole case
+        iprob = 1 !dipole case
         refine_criterion = 3
         refine_max_level = 1
         domain_nx1    = 256
@@ -40,12 +40,12 @@
         block_nx1 = 64
         block_nx2 = 64
         block_nx3 = 64
-        xprobmin1     = -150.0d8
-        xprobmax1     = 150.0d8
-        xprobmin2     = -150.0d8
-        xprobmax2     = 150.0d8
-        xprobmin3     = -150.0d8
-        xprobmax3     = 150.0d8
+        xprobmin1     = -150.0d10
+        xprobmax1     = 150.0d10
+        xprobmin2     = -150.0d10
+        xprobmax2     = 150.0d10
+        xprobmin3     = -150.0d10
+        xprobmax3     = 150.0d10
  /
 
  &paramlist
@@ -58,7 +58,7 @@
  /
 
  &particles_list
-        physics_type_particles='gca'
+        physics_type_particles='Lorentz'
         num_particles= 10 !10
         dtsave_particles = 1.0d-2
         write_ensemble = f

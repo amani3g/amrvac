@@ -22,7 +22,7 @@ module mod_usr
   double precision :: force_B0(3) = [not_used_value, 0.0d0, 0.0d0]
 
   ! Use an analytic field instead of an interpolated one
-  logical :: use_analytic_field = .false. !leave false for guiding center approximation
+  logical :: use_analytic_field = .true. !leave false for guiding center approximation
   ! If false, then in each cell of the grid the value of the grid will be interpolated
   ! If true, it will just read the x value that it's given
 
@@ -167,12 +167,11 @@ contains
 
       ! x is in cm, this corresponds to B = 10 T at 1 m
       ! M = 10 G * 10^4 T/m * 10^2 cm/m
-      ! qM/m = 
-      B = 10 * 1d6 * [3d0 * x(1) * x(3), &
+      ! Set M = 4.176 G * 10^4 T/m * 10^2 cm/m
+      B = 4.176 * 1d6 * [3d0 * x(1) * x(3), &
            3d0 * x(2) * x(3), &
            2d0 * x(3)**2 - x(1)**2 - x(2)**2] / &
            (x(1)**2 + x(2)**2 + x(3)**2)**2.5d0
-      ! print*, B
 
     case (2)
       ! Magnetic dipole (run up to t = 100)
@@ -181,21 +180,23 @@ contains
       E = [0.0d0, 0.0d0, 0.0d0]
 
       ! Convert x to x_spherical
+      ! Point Transformation:
+      ! r = sqrt(x^2 + y^2 + z^2), theta = cos^-1(z/r), phi = tan^-1(y/x)
       x_sphere = [(x(1)**2 + x(2)**2 + x(3)**2)**.5, acos(x(3)/((x(1)**2 + x(2)**2 + x(3)**2)**.5)), atan2(x(2),x(1))]
-      ! print*, x_sphere(2) -> order 1 (between 0 -> pi)
-      !print *, x_sphere(1)
 
       ! Calculate B in spherical coordinates
-      B_sphere = 10 * 1d6 * [2*cos(x_sphere(2)), sin(x_sphere(2)), 0.0d0] / (x_sphere(1)**3.0d0) ! x_sphere ~10^9 x_sphere^3 ~10^27
 
-      ! Convert B in spherical coordinates to B in cartesian
-      ! y is zero here!
-      B = B_sphere(1)* [cos(B_sphere(3))*sin(B_sphere(2)), sin(B_sphere(3))*sin(B_sphere(2)), cos(B_sphere(2))]
-      ! print*, B
+      B_sphere = 10 * 1d6 * [2*cos(x_sphere(3)), sin(x_sphere(3)), 0.0d0] / (x_sphere(1)**3.0d0) ! x_sphere ~10^9 x_sphere^3 ~10^27
 
-      !!!!!!!!!!!!!!!!!!!!!
-      ! Segmentatin Error !
-      !!!!!!!!!!!!!!!!!!!!!
+      ! Convert B(r,theta,phi) to B(x,y,z)
+      ! Vector Transformation:
+      ! Ax = Ar*sin(theta)*cos(phi) + Atheta*cos(theta)*cos(phi) - Aphi*sin(phi)
+      ! Ay = Ar*sin(theta)*sin(phi) + Atheta*cos(theta)*sin(phi) + Aphi*cos(phi)
+      ! Az = Ar*cos(theta)          - Atheta*sin(theta)          +      0
+      B = [B_sphere(1)*sin(x_sphere(2))*cos(x_sphere(3)) + B_sphere(2)*cos(x_sphere(2))*cos(x_sphere(3)) - B_sphere(3)*sin(x_sphere(3)), &
+           B_sphere(1)*sin(x_sphere(2))*sin(x_sphere(3)) + B_sphere(2)*cos(x_sphere(2))*sin(x_sphere(3)) + B_sphere(3)*cos(x_sphere(3)), &
+           B_sphere(1)*cos(x_sphere(2)) - B_sphere(2)*sin(x_sphere(2))]
+
 
     case(3)
       E = [0.0d0, 0.0d0, 0.0d0]
@@ -334,7 +335,16 @@ contains
        if (physics_type_particles /= 'gca') then
           ! Assume B = 10 T, and v_x = 0 initially
           ! x = vx + |vy|*m/10q
-          x(1) = x(1) + abs(v(2)) * m / (q * 10.0d0)
+          !x(1) = x(1) + abs(v(2)) * m / (q * 10.0d0)
+
+          ! Distribute over circle, velocity inwards. Avoid pi/4.
+          phi = ((ipart+0.125d0) * 2 * acos(-1.0d0)) / n_particles
+          x = norm2(x0) * [cos(phi), sin(phi), 0.0d0]
+
+          ! Add Maxwellian velocity. Random numbers come in pairs of two
+          tmp_vec(1:2) = rng%two_normals()
+          tmp_vec(3:4) = rng%two_normals()
+          v = v0 + tmp_vec(1:3) * maxwellian_velocity
 
        end if
     case (2) ! Dipole case
