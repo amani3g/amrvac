@@ -27,11 +27,14 @@ module mod_usr
   ! If false, then in each cell of the grid the value of the grid will be interpolated
   ! If true, it will just read the x value that it's given
 
-  ! Dipole Coordinates csv file name 
-  ! character*(30), parameter :: dipole_coord_bcsv = 'dipole_grid/dipole_vectors.csv'
+  ! Dipole Vectors csv file name 
+  character*(30), parameter :: dipole_coord_bcsv = 'dipole_grid/dipole_vectors.csv'
+
+  ! JRM09 Vectors csv file name 
+  character*(29), parameter :: jrm09_coord_bcsv = 'jrm09_grid/jrm09_vectors.csv'
 
   ! Coordinate vectors of 3d bfield grid solution
-  ! double precision :: r_vec(22), theta_vec(22), phi_vec(22)
+  double precision :: r_vec(22), theta_vec(22), phi_vec(22), mult_vec(22)
 
 
 contains
@@ -39,12 +42,12 @@ contains
   subroutine usr_init()
     use mod_initialize
 
+    !declare integer i
+    integer :: i
+
     unit_length        = 1.d0
     unit_numberdensity = 1.d0
     unit_velocity      = 1.0d0
-
-    !declare integer i
-    ! integer :: i
 
     usr_init_one_grid => initonegrid_usr
     usr_create_particles => generate_particles
@@ -62,12 +65,17 @@ contains
       usr_particle_analytic => get_analytic_field
     end if
 
-    ! initialize coordinate vectors
+    ! initialize jrm09 coordinate vectors
     ! open coordinate csv
-    ! open(1, file = dipole_coord_bcsv)
-    ! do i = 1, 22
-    !  read(1,*) r_vec[i], theta_vec[i], phi_vec[i]
-    !print r_vec, theta_vec, phi_vec
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ! If this is the dipole case this needs to be changed!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    open(1, file = dipole_coord_bcsv)
+    do i = 1, 22
+      read(1,*) mult_vec(i), r_vec(i), theta_vec(i), phi_vec(i)
+    enddo
+    print*, mult_vec(i), r_vec, theta_vec, phi_vec
+
   end subroutine usr_init
 
   !> Read parameters from a file
@@ -149,16 +157,24 @@ contains
     double precision, intent(out) :: E(3), B(3)
 
     ! declare: i, j, k, r_index, theta_index, phi_index as integers
-    !integer :: i, j, k, r_index, theta_index, phi_index
+    integer :: i, j, k, r_index, theta_index, phi_index
     ! declare: r_delta, theta_delta, phi_delta as 22long arrays, 
-    !double precision :: r_delta(22), theta_delta(22), phi_delta(22)
+    double precision :: r_delta(22), theta_delta(22), phi_delta(22)
     ! declare: x_sphere, B_sphere as 3long array
     double precision :: x_sphere(3), B_sphere(3)
     ! declare r_min, theta_min, phi_min as double precision
-    !double precision :: r_min, theta_min, phi_min    
+    double precision :: r_min, theta_min, phi_min    
     ! character formater for bfield_grid/##_surface
-    !character(8) :: fmt 
-    !character(2) :: ichar
+    character(8) :: fmt 
+    integer :: r_mult
+    character(2) :: r_mult_str
+    ! file names 
+    character(36) :: Br_file3, Btheta_file3, Bphi_file3 !for iprob 3, dipole
+    character(35) :: Br_file4, Btheta_file4, Bphi_file4 !for iprob 4, jrm09
+    ! tmp arrays for reading rows (corresponding to a theta value) from files
+    double precision :: Br_tmp(22), Btheta_tmp(22), Bphi_tmp(22)
+    ! integers for reading through csv files
+    integer :: i_, j_, k_
 
 
     select case (iprob)
@@ -199,15 +215,14 @@ contains
            B_sphere(1)*cos(x_sphere(2)) - B_sphere(2)*sin(x_sphere(2))]
 
 
-    case(3)
+    case(3) ! read from dipole csv
       E = [0.0d0, 0.0d0, 0.0d0]
-      B = [0.0d0, 0.0d0, 0.0d0]
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! convert x -> x_spherical
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      !x_sphere = [(x(1)**2 + x(2)**2 + x(3)**2)**.5, acos(x(3)/((x(1)**2 + x(2)**2 + x(3)**2)**.5)), atan2(x(2),x(1))]
+      x_sphere = [(x(1)**2 + x(2)**2 + x(3)**2)**.5, acos(x(3)/((x(1)**2 + x(2)**2 + x(3)**2)**.5)), atan2(x(2),x(1))]
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Get index of the closest position value
@@ -215,62 +230,62 @@ contains
 
       ! loop through the r_vec
 
-      !do i = 1, 22
+      do i = 1, 22
         ! calculate the absolute value of the difference between r_vec[i] and x_spherical(1)
         ! save the difference in r_delta array
-      !  r_delta[i] = ABS(r_vec[i]-x_spherical(1))
-      !enddo
+        r_delta(i) = ABS(r_vec(i)-x_sphere(1))
+      end do
 
       ! find the minimun value of r_delta array
-      !r_min = MIN(r_delta)
+      r_min = minval(r_delta)
 
       ! loop through the values of r_delta, and get the index
-      !do i = 1, 22
+      do i = 1, 22
         ! if the minimum value is equal to r_delta[i]
-      !  if (r_delta[i] == r_min) then
+        if (r_delta(i) == r_min) then
           ! set r_index = i
-      !    r_index = i
-      !  endif
-      !enddo
+          r_index = i
+        end if
+      end do
             
 
       ! loop through the theta_vec
-      !do j = 1,22
+      do j = 1,22
         ! calculate the absolute difference between theta_vec[j] and x_spherical(2)
         ! save the difference in theta_delta array
-      !  theta_delta[j] = ABS(theta_vec[j]-x_spherical(2))
-      !enddo
+        theta_delta(j) = ABS(theta_vec(j)-x_sphere(2))
+      end do
 
       ! find the minimun value of theta_delta array
-      !theta_min = MIN(theta_delta)
+      theta_min = minval(theta_delta)
 
       ! loop through the values of theta_delta, and get the index
-      !do j= 1,22
+      do j= 1,22
         ! if the minimum value is equal to theta_delta[j]
-      !  if (theta_delta[j] == theta_min) then
+        if (theta_delta(j) == theta_min) then
           ! set theta_index = j
-      !    theta_index = j
-      !  endif
-      !enddo
+          theta_index = j
+        end if
+      end do
  
       ! loop through the phi_vec
-      !do k = 1,22
+      do k = 1,22
         ! calculate the difference between phi_vec[k] and x_spherical(3)
         ! save the difference in phi_delta array
-      !  phi_delta[k] = ABS(phi_vec[k]-x_spherical(3))
-      !enddo
+        phi_delta(k) = ABS(phi_vec(k)-x_sphere(3))
+      end do
 
       ! find the minimun value of phi_delta array
-      !phi_min = MIN(phi_delta)
+      phi_min = minval(phi_delta)
 
       ! loop through the values of phi_delta, and get the index
-      !do k = 1,22
+      do k = 1,22
         ! if the minimum value is equal to phi_delta[k]
-      !  if (phi_delta[k] == phi_min) then
+        if (phi_delta(k) == phi_min) then
           ! set phi_index = k
-      !    phi_index = k
-      !  endif
-      !enddo
+          phi_index = k
+        end if
+      end do
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Get B value at that position from csv!
@@ -279,32 +294,199 @@ contains
       ! first find the ith directory in bfield_grid_directory
       ! ith_dir = 'jrm09_spherical_grid/'+str(i)
       ! format ith num
-      !fmt = '(I2.2)' ! integer of width 2 with zeros at the left
-      !rnum = r_vec[r_index]/7.1492000d7
-
+      fmt = '(I2.2)' ! integer of width 2 with zeros at the left
+      r_mult = mult_vec(r_index)
+      write(r_mult_str, fmt) r_mult
 
       ! open ith_dir/Br.csv
-      ! Br_file = ith_dir + '/Br.csv'
-      ! get the Br[jth, kth] value
-      ! B_spherical(1) = Br
+      Br_file3 = 'dipole_grid/'//trim(r_mult_str)//'_rj_surface/Br.csv'
+      open(2, file = Br_file3)
+      ! Read up to the j-1th row of the csv
+      ! Read the jth row of the Br_file3 into Br_tmp array
+      do i_ = 1, (theta_index-1)
+        read(2, *)
+      end do 
+      read(2, *) Br_tmp
+      ! Set B_spherical(1) equal to the kth term in the Br_tmp array
+      B_sphere(1) = Br_tmp(phi_index)
+      close(2)
 
       ! open ith_dir/Btheta.csv
-      ! Btheta_file = ith_dir + '/Btheta.csv'
-      ! get the jth, kth value
-      ! B_spherical(2) = Btheta
+      Btheta_file3 = 'dipole_grid/'//trim(r_mult_str)//'_rj_surface/Btheta.csv'
+      open(3, file = Btheta_file3)
+      ! Read up to the j-1th row of the csv
+      ! Read the jth row into the Btheta_tmp array 
+      do j_ = 1, (theta_index-1)
+        read(3, *)
+      end do
+      read(3, *) Btheta_tmp
+      ! Set B_spherical(2) equal to the kth term in the Btheta_tmp array
+      B_sphere(2) = Btheta_tmp(phi_index)
+      close(3)
+
 
       ! open ith_dir/Bphi.csv
-      ! Bphi_file = ith_dir + '/Bphi.csv'
-      ! get the jth, kth value
-      ! B_spherical(3) = Bphi
+      Bphi_file3 = 'dipole_grid/'//trim(r_mult_str)//'_rj_surface/Bphi.csv'
+      open(4, file = Bphi_file3)
+      ! Read up to the j-1th row of the csv
+      ! Read the jth row in the Bphi_tmp array
+      do k_ = 1, (theta_index-1)
+        read(4, *)
+      end do
+      ! Set B_spherical(3) equal to the kth term in the Bphi_tmp array
+      B_sphere(3) = Bphi_tmp(phi_index)
+      close(4)
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! Convert B_spherical to B 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       ! Return B in cartesian coordinates!
-      ! B = []
+      ! Convert B(r,theta,phi) to B(x,y,z)
+      ! Vector Transformation:
+      ! Ax = Ar*sin(theta)*cos(phi) + Atheta*cos(theta)*cos(phi) - Aphi*sin(phi)
+      ! Ay = Ar*sin(theta)*sin(phi) + Atheta*cos(theta)*sin(phi) + Aphi*cos(phi)
+      ! Az = Ar*cos(theta)          - Atheta*sin(theta)          +      0
+      B = [B_sphere(1)*sin(x_sphere(2))*cos(x_sphere(3)) + B_sphere(2)*cos(x_sphere(2))*cos(x_sphere(3)) - B_sphere(3)*sin(x_sphere(3)), &
+           B_sphere(1)*sin(x_sphere(2))*sin(x_sphere(3)) + B_sphere(2)*cos(x_sphere(2))*sin(x_sphere(3)) + B_sphere(3)*cos(x_sphere(3)), &
+           B_sphere(1)*cos(x_sphere(2)) - B_sphere(2)*sin(x_sphere(2))]
 
+    case(4) !read jrm09 from csv
+
+      E = [0.0d0, 0.0d0, 0.0d0]
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! convert x -> x_spherical
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      x_sphere = [(x(1)**2 + x(2)**2 + x(3)**2)**.5, acos(x(3)/((x(1)**2 + x(2)**2 + x(3)**2)**.5)), atan2(x(2),x(1))]
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Get index of the closest position value
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      ! loop through the r_vec
+
+      do i = 1, 22
+        ! calculate the absolute value of the difference between r_vec[i] and x_spherical(1)
+        ! save the difference in r_delta array
+        r_delta(i) = ABS(r_vec(i)-x_sphere(1))
+      end do
+
+      ! find the minimun value of r_delta array
+      r_min = minval(r_delta)
+
+      ! loop through the values of r_delta, and get the index
+      do i = 1, 22
+        ! if the minimum value is equal to r_delta[i]
+        if (r_delta(i) == r_min) then
+          ! set r_index = i
+          r_index = i
+        end if
+      end do
+            
+
+      ! loop through the theta_vec
+      do j = 1,22
+        ! calculate the absolute difference between theta_vec[j] and x_spherical(2)
+        ! save the difference in theta_delta array
+        theta_delta(j) = ABS(theta_vec(j)-x_sphere(2))
+      end do
+
+      ! find the minimun value of theta_delta array
+      theta_min = minval(theta_delta)
+
+      ! loop through the values of theta_delta, and get the index
+      do j= 1,22
+        ! if the minimum value is equal to theta_delta[j]
+        if (theta_delta(j) == theta_min) then
+          ! set theta_index = j
+          theta_index = j
+        end if
+      end do
+ 
+      ! loop through the phi_vec
+      do k = 1,22
+        ! calculate the difference between phi_vec[k] and x_spherical(3)
+        ! save the difference in phi_delta array
+        phi_delta(k) = ABS(phi_vec(k)-x_sphere(3))
+      end do
+
+      ! find the minimun value of phi_delta array
+      phi_min = minval(phi_delta)
+
+      ! loop through the values of phi_delta, and get the index
+      do k = 1,22
+        ! if the minimum value is equal to phi_delta[k]
+        if (phi_delta(k) == phi_min) then
+          ! set phi_index = k
+          phi_index = k
+        end if
+      end do
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Get B value at that position from csv!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      ! first find the ith directory in bfield_grid_directory
+      ! ith_dir = 'jrm09_spherical_grid/'+str(i)
+      ! format ith num
+      fmt = '(I2.2)' ! integer of width 2 with zeros at the left
+      r_mult = mult_vec(r_index)
+      write(r_mult_str, fmt) r_mult
+
+      ! open ith_dir/Br.csv
+      Br_file4 = 'jrm09_grid/'//trim(r_mult_str)//'_rj_surface/Br.csv'
+      open(2, file = Br_file4)
+      ! Read up to the j-1th row of the csv
+      ! Read the jth row of the Br_file into Br_tmp array
+      do i_ = 1, (theta_index-1)
+        read(2, *)
+      end do 
+      read(2, *) Br_tmp
+      ! Set B_spherical(1) equal to the kth term in the Br_tmp array
+      B_sphere(1) = Br_tmp(phi_index)
+      close(2)
+
+      ! open ith_dir/Btheta.csv
+      Btheta_file4 = 'jrm09_grid/'//trim(r_mult_str)//'_rj_surface/Btheta.csv'
+      open(3, file = Btheta_file4)
+      ! Read up to the j-1th row of the csv
+      ! Read the jth row into the Btheta_tmp array 
+      do j_ = 1, (theta_index-1)
+        read(3, *)
+      end do
+      read(3, *) Btheta_tmp
+      ! Set B_spherical(2) equal to the kth term in the Btheta_tmp array
+      B_sphere(2) = Btheta_tmp(phi_index)
+      close(3)
+
+
+      ! open ith_dir/Bphi.csv
+      Bphi_file4 = 'jrm09_grid/'//trim(r_mult_str)//'_rj_surface/Bphi.csv'
+      open(4, file = Bphi_file4)
+      ! Read up to the j-1th row of the csv
+      ! Read the jth row in the Bphi_tmp array
+      do k_ = 1, (theta_index-1)
+        read(4, *)
+      end do
+      ! Set B_spherical(3) equal to the kth term in the Bphi_tmp array
+      B_sphere(3) = Bphi_tmp(phi_index)
+      close(4)
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ! Convert B_spherical to B 
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      ! Return B in cartesian coordinates!
+      ! Convert B(r,theta,phi) to B(x,y,z)
+      ! Vector Transformation:
+      ! Ax = Ar*sin(theta)*cos(phi) + Atheta*cos(theta)*cos(phi) - Aphi*sin(phi)
+      ! Ay = Ar*sin(theta)*sin(phi) + Atheta*cos(theta)*sin(phi) + Aphi*cos(phi)
+      ! Az = Ar*cos(theta)          - Atheta*sin(theta)          +      0
+      B = [B_sphere(1)*sin(x_sphere(2))*cos(x_sphere(3)) + B_sphere(2)*cos(x_sphere(2))*cos(x_sphere(3)) - B_sphere(3)*sin(x_sphere(3)), &
+           B_sphere(1)*sin(x_sphere(2))*sin(x_sphere(3)) + B_sphere(2)*cos(x_sphere(2))*sin(x_sphere(3)) + B_sphere(3)*cos(x_sphere(3)), &
+           B_sphere(1)*cos(x_sphere(2)) - B_sphere(2)*sin(x_sphere(2))]
 
 
     case default
@@ -333,21 +515,18 @@ contains
     case (1) ! Dipole case
        v = v0
        q = (charge * ipart) / n_particles
-       if (physics_type_particles /= 'gca') then
-          ! Assume B = 10 T, and v_x = 0 initially
-          ! x = vx + |vy|*m/10q
-          !x(1) = x(1) + abs(v(2)) * m / (q * 10.0d0)
+       ! Assume B = 10 T, and v_x = 0 initially
+       ! x = vx + |vy|*m/10q
+       !x(1) = x(1) + abs(v(2)) * m / (q * 10.0d0)
 
-          ! Distribute over circle, velocity inwards. Avoid pi/4.
-          phi = ((ipart+0.125d0) * 2 * acos(-1.0d0)) / n_particles
-          x = norm2(x0) * [cos(phi), sin(phi), 0.0d0]
+       ! Distribute over circle, velocity inwards. Avoid pi/4.
+       phi = ((ipart+0.125d0) * 2 * acos(-1.0d0)) / n_particles
+       x = norm2(x0) * [cos(phi), sin(phi), 0.0d0]
 
-          ! Add Maxwellian velocity. Random numbers come in pairs of two
-          tmp_vec(1:2) = rng%two_normals()
-          tmp_vec(3:4) = rng%two_normals()
-          v = v0 + tmp_vec(1:3) * maxwellian_velocity
-
-       end if
+       ! Add Maxwellian velocity. Random numbers come in pairs of two
+       tmp_vec(1:2) = rng%two_normals()
+       tmp_vec(3:4) = rng%two_normals()
+       v = v0 + tmp_vec(1:3) * maxwellian_velocity
     case (2) ! Dipole case
        v = v0
        q = (charge * ipart) / n_particles
@@ -357,7 +536,21 @@ contains
           x(1) = x(1) + abs(v(2)) * m / (q * 10.0d0)
 
        end if
+    case (3) ! jrm09
+       v = v0
+       q = (charge * ipart) / n_particles
+       ! Assume B = 10 T, and v_x = 0 initially
+       ! x = vx + |vy|*m/10q
+       !x(1) = x(1) + abs(v(2)) * m / (q * 10.0d0)
 
+       ! Distribute over circle, velocity inwards. Avoid pi/4.
+       phi = ((ipart+0.125d0) * 2 * acos(-1.0d0)) / n_particles
+       x = norm2(x0) * [cos(phi), sin(phi), 0.0d0]
+
+       ! Add Maxwellian velocity. Random numbers come in pairs of two
+       tmp_vec(1:2) = rng%two_normals()
+       tmp_vec(3:4) = rng%two_normals()
+       v = v0 + tmp_vec(1:3) * maxwellian_velocity
     !case (4)
     !   ! Add Maxwellian velocity. Random numbers come in pairs of two
     !   tmp_vec(1:2) = rng%two_normals()

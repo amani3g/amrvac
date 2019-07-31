@@ -2,7 +2,7 @@
         autoconvert   = f
         saveprim      = T
         nwauxio       = 0
-        base_filename = 'output/iprob_1_x0_5rj_v0_100eV_qe_qm'
+        base_filename = 'output/iprob_3_x0_5rj_v0_100eV_qe_qm'
         convert_type  = 'vtuBmpi'
  /
 
@@ -31,7 +31,7 @@
  /
 
  &meshlist
-        iprob = 1 !dipole case
+        iprob = 3 !dipole case
         refine_criterion = 3
         refine_max_level = 1
         domain_nx1    = 256
