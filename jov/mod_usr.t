@@ -4,25 +4,26 @@ module mod_usr
 
   implicit none
 
-  double precision :: charge = 1.0d0 !1.60218d-19 ![C]
-  double precision :: mass = 1.0d0 !9.10938d-31 ![kg]
+  double precision :: charge = 1.60218d-19 ![C]
+  double precision :: mass = 9.10938d-31 ![kg]
 
   ! Initial position (in m)
-  double precision :: x0(3) = [0.0d0, 0.0d0, 0.0d0]
+  double precision, parameter :: rj = 4.192d7
+  double precision :: x0(3) = [5*rj, 0.0d0, 0.0d0]
 
   ! Initial velocity (in m/s) 
   ! the speed of light const_c is defined in cgs in amrvac !
   double precision :: v0(3) = [0.0d0, 0.0d0, 0.0d0]
 
   ! Maxwellian velocity (per component vx, vy, vz)
-  double precision :: maxwellian_velocity = 0.0d0
+  double precision :: maxwellian_velocity = 3.42527d6
 
   double precision, parameter :: not_used_value = -1.0d20
   double precision :: force_E0(3) = [not_used_value, 0.0d0, 0.0d0]
   double precision :: force_B0(3) = [not_used_value, 0.0d0, 0.0d0]
 
   ! Use an analytic field instead of an interpolated one
-  logical :: use_analytic_field = .true. !leave false for guiding center approximation
+  logical :: use_analytic_field = .true. !GIVES A SEGMENTATION ERROR, INTERPOLATING ONLY WITH GCA
   ! If false, then in each cell of the grid the value of the grid will be interpolated
   ! If true, it will just read the x value that it's given
 
