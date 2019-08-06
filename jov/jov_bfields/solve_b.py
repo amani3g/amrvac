@@ -3,6 +3,7 @@ import csv
 import scipy
 from scipy.special import legendre
 import pyshtools
+import matplotlib.pyplot as plt
 
 ####################
 # This code solves for JRM09
@@ -87,5 +88,6 @@ def dipole(r):
 	
 	return Br, Btheta, Bphi, Bmag, lat_, lon_
 
-
-
+mag, Br, Btheta, Bphi, Bmag, Vp, lat, lon = jrm09(71492000)
+mag.plot()
+plt.show()

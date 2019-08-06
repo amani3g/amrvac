@@ -2,7 +2,7 @@
         autoconvert   = f
         saveprim      = T
         nwauxio       = 0
-        base_filename = 'output/iprob_3_x0_5rj_v0_100eV_qe_qm'
+        base_filename = 'output/iprob_4_x0_5rj_v0_100eV_qe_qm_testshtools'
         convert_type  = 'vtuBmpi'
  /
 
@@ -31,7 +31,7 @@
  /
 
  &meshlist
-        iprob = 3 !dipole case
+        iprob = 4 !dipole case
         refine_criterion = 3
         refine_max_level = 1
         domain_nx1    = 256
@@ -40,12 +40,12 @@
         block_nx1 = 64
         block_nx2 = 64
         block_nx3 = 64
-        xprobmin1     = -150.0d10
-        xprobmax1     = 150.0d10
-        xprobmin2     = -150.0d10
-        xprobmax2     = 150.0d10
-        xprobmin3     = -150.0d10
-        xprobmax3     = 150.0d10
+        xprobmin1     = -7.1492d9 !-150.0d10
+        xprobmax1     = 7.1492d9 !150.0d10
+        xprobmin2     = -7.1492d9 !-150.0d10
+        xprobmax2     = 7.1492d9 !150.0d10
+        xprobmin3     = -7.1492d9!-150.0d10
+        xprobmax3     = 7.1492d9 !150.0d10
  /
 
  &paramlist
@@ -54,22 +54,21 @@
 
  &mhd_list
         typedivbfix   = 'linde'
-        mhd_particles = .true.
+        mhd_particles = .true.    !Has to be true for Lorentz
  /
 
  &particles_list
         physics_type_particles='Lorentz'
-        num_particles= 10 !10
+        num_particles= 10 
         dtsave_particles = 1.0d-2
         write_ensemble = f
         write_individual = t
-        npayload=14
+        npayload=3
         particles_eta=0.0d-4
         const_dt_particles = 5d-4
  /
 
  &my_list
-        x0 = 1.0d0, 0.0d0, 0.0d0
-        v0 = 0.0d0, 1.0d0, 0.5d0
-        charge = 10.0
+        !x0 = 1.0d0, 0.0d0, 0.0d0
+        !v0 = 0.0d0, 1.0d0, 0.5d0
  /
