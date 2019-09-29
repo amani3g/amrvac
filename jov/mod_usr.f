@@ -28,9 +28,11 @@ module mod_usr
   ! If true, it will just read the x value that it's given
 
   ! Dipole Vectors csv file name 
-  character*(30), parameter :: dipole_coord_bcsv = 'dipole_grid/dipole_vectors.csv'
+  character*(30), parameter :: dipole_coord_bcsv = &
+     'dipole_grid/dipole_vectors.csv'
   ! JRM09 Vectors csv file name 
-  character*(29), parameter :: jrm09_coord_bcsv = 'jrm09_grid_2/jrm09_vectors.csv'
+  character*(29), parameter :: jrm09_coord_bcsv = &
+     'jrm09_grid_2/jrm09_vectors.csv'
   ! Coordinate vectors of 3d bfield grid solution
   double precision :: r_vec(22), theta_vec(22), phi_vec(22), mult_vec(22)
 
@@ -59,8 +61,10 @@ module mod_usr
       call initialize_amrvac()    ! So that we have settings available
 
       if (use_analytic_field) then
-        if (physics_type_particles /= 'Lorentz' .and. physics_type_particles /= 'Vay' .and. physics_type_particles /= 'HC') &
-             call mpistop('Analytic fields only supported with Boris, HC or Vay schemes')
+        if (physics_type_particles /= 'Lorentz' .and. physics_type_particles &
+           /= 'Vay' .and. physics_type_particles /= 'HC') call &
+           mpistop&
+           ('Analytic fields only supported with Boris, HC or Vay schemes')
         usr_particle_analytic => get_analytic_field
       end if
 
@@ -81,8 +85,8 @@ module mod_usr
       character(len=*), intent(in) :: files(:)
       integer                      :: n
 
-      namelist /my_list/ charge, mass, x0, v0, use_analytic_field, force_E0, &
-           force_B0, maxwellian_velocity
+      namelist /my_list/ charge, mass, x0, v0, use_analytic_field, force_E0,&
+          force_B0, maxwellian_velocity
 
       do n = 1, size(files)
          open(unitpar, file=trim(files(n)), status="old")
@@ -92,11 +96,15 @@ module mod_usr
 
     end subroutine params_read
 
-    subroutine initonegrid_usr(ixI^L,ixO^L,w,x)
+    subroutine initonegrid_usr(ixImin1,ixImin2,ixImin3,ixImax1,ixImax2,ixImax3,&
+       ixOmin1,ixOmin2,ixOmin3,ixOmax1,ixOmax2,ixOmax3,w,x)
       ! initialize one grid
-      integer, intent(in) :: ixI^L, ixO^L
-      double precision, intent(in) :: x(ixI^S,1:ndim)
-      double precision, intent(inout) :: w(ixI^S,1:nw)
+      integer, intent(in) :: ixImin1,ixImin2,ixImin3,ixImax1,ixImax2,ixImax3,&
+          ixOmin1,ixOmin2,ixOmin3,ixOmax1,ixOmax2,ixOmax3
+      double precision, intent(in) :: x(ixImin1:ixImax1,ixImin2:ixImax2,&
+         ixImin3:ixImax3,1:ndim)
+      double precision, intent(inout) :: w(ixImin1:ixImax1,ixImin2:ixImax2,&
+         ixImin3:ixImax3,1:nw)
 
       double precision:: rho0,p0,b0
       logical, save :: first=.true.
@@ -105,16 +113,17 @@ module mod_usr
       p0 = 1.0d0
       b0 = 1.0d0
 
-      w(ixO^S,rho_)= rho0
-      w(ixO^S,mom(1))= 0.0d0
-      w(ixO^S,mom(2))= 0.0d0
-      w(ixO^S,mom(3))= 0.0d0
-      w(ixO^S,p_)=p0
-      w(ixO^S,mag(1))= 0.0d0
-      w(ixO^S,mag(2))= 0.0d0
-      w(ixO^S,mag(3))= b0
+      w(ixOmin1:ixOmax1,ixOmin2:ixOmax2,ixOmin3:ixOmax3,rho_)= rho0
+      w(ixOmin1:ixOmax1,ixOmin2:ixOmax2,ixOmin3:ixOmax3,mom(1))= 0.0d0
+      w(ixOmin1:ixOmax1,ixOmin2:ixOmax2,ixOmin3:ixOmax3,mom(2))= 0.0d0
+      w(ixOmin1:ixOmax1,ixOmin2:ixOmax2,ixOmin3:ixOmax3,mom(3))= 0.0d0
+      w(ixOmin1:ixOmax1,ixOmin2:ixOmax2,ixOmin3:ixOmax3,p_)=p0
+      w(ixOmin1:ixOmax1,ixOmin2:ixOmax2,ixOmin3:ixOmax3,mag(1))= 0.0d0
+      w(ixOmin1:ixOmax1,ixOmin2:ixOmax2,ixOmin3:ixOmax3,mag(2))= 0.0d0
+      w(ixOmin1:ixOmax1,ixOmin2:ixOmax2,ixOmin3:ixOmax3,mag(3))= b0
 
-      call mhd_to_conserved(ixI^L,ixO^L,w,x)
+      call mhd_to_conserved(ixImin1,ixImin2,ixImin3,ixImax1,ixImax2,ixImax3,&
+         ixOmin1,ixOmin2,ixOmin3,ixOmax1,ixOmax2,ixOmax3,w,x)
 
       if (first .and. mype==0 )then
         write(*,*) 'Test particles in 3D simple B-field'
@@ -176,7 +185,8 @@ module mod_usr
       ! integers for reading through csv files
       integer :: i_, j_, k_
       ! JRM09 Vectors csv file name 
-      character*(100), parameter :: jrm09_coord_bcsv = '/Users/amani3g/jupiter/amrvac/jov/jrm09_grid_2/JRM09_Vectors.csv'
+      character*(100), parameter :: jrm09_coord_bcsv = &
+         '/Users/amani3g/jupiter/amrvac/jov/jrm09_grid_2/JRM09_Vectors.csv'
       ! Coordinate vectors of 3d bfield grid solution
       double precision :: r_vec(22), theta_vec(22), phi_vec(22), i_vec(22)
       double precision, parameter :: not_used_value = -1.0d20
@@ -194,10 +204,9 @@ module mod_usr
         ! x is in cm, this corresponds to B = 10 T at 1 m
         ! M = 10 G * 10^4 T/m * 10^2 cm/m
         ! Set M = 4.176 G * 10^4 T/m * 10^2 cm/m
-        B = 4.176 * 1d6 * [3d0 * x(1) * x(3), &
-             3d0 * x(2) * x(3), &
-             2d0 * x(3)**2 - x(1)**2 - x(2)**2] / &
-             (x(1)**2 + x(2)**2 + x(3)**2)**2.5d0
+        B = 4.176 * 1d6 * [3d0 * x(1) * x(3), 3d0 * x(2) * x(3),&
+            2d0 * x(3)**2 - x(1)**2 - x(2)**2] / (x(1)**2 + x(2)**2 + &
+           x(3)**2)**2.5d0
 
       case (2)
         ! Magnetic dipole (run up to t = 100)
@@ -208,20 +217,26 @@ module mod_usr
         ! Convert x to x_spherical
         ! Point Transformation:
         ! r = sqrt(x^2 + y^2 + z^2), theta = cos^-1(z/r), phi = tan^-1(y/x)
-        x_sphere = [(x(1)**2 + x(2)**2 + x(3)**2)**.5, acos(x(3)/((x(1)**2 + x(2)**2 + x(3)**2)**.5)), atan2(x(2),x(1))]
+        x_sphere = [(x(1)**2 + x(2)**2 + x(3)**2)**.5,&
+            acos(x(3)/((x(1)**2 + x(2)**2 + x(3)**2)**.5)), atan2(x(2),x(1))]
 
         ! Calculate B in spherical coordinates
 
-        B_sphere = 4.176 * 1d6 * [2*cos(x_sphere(2)), sin(x_sphere(2)), 0.0d0] / (x_sphere(1)**3.0d0) ! x_sphere ~10^9 x_sphere^3 ~10^27
+        B_sphere = 4.176 * 1d6 * [2*cos(x_sphere(2)), sin(x_sphere(2)),&
+            0.0d0] / (x_sphere(1)**3.0d0) !x_sphere 109,109,109 x_sphere3,x_sphere3,x_sphere3 1027,1027,1027
 
         ! Convert B(r,theta,phi) to B(x,y,z)
         ! Vector Transformation:
         ! Ax = Ar*sin(theta)*cos(phi) + Atheta*cos(theta)*cos(phi) - Aphi*sin(phi)
         ! Ay = Ar*sin(theta)*sin(phi) + Atheta*cos(theta)*sin(phi) + Aphi*cos(phi)
         ! Az = Ar*cos(theta)          - Atheta*sin(theta)          +      0
-        B = [B_sphere(1)*sin(x_sphere(2))*cos(x_sphere(3)) + B_sphere(2)*cos(x_sphere(2))*cos(x_sphere(3)) - B_sphere(3)*sin(x_sphere(3)), &
-             B_sphere(1)*sin(x_sphere(2))*sin(x_sphere(3)) + B_sphere(2)*cos(x_sphere(2))*sin(x_sphere(3)) + B_sphere(3)*cos(x_sphere(3)), &
-             B_sphere(1)*cos(x_sphere(2)) - B_sphere(2)*sin(x_sphere(2))]
+        B = [B_sphere(1)*sin(x_sphere(2))*cos(x_sphere(3)) + &
+           B_sphere(2)*cos(x_sphere(2))*cos(x_sphere(3)) - &
+           B_sphere(3)*sin(x_sphere(3)), &
+           B_sphere(1)*sin(x_sphere(2))*sin(x_sphere(3)) + &
+           B_sphere(2)*cos(x_sphere(2))*sin(x_sphere(3)) + &
+           B_sphere(3)*cos(x_sphere(3)), B_sphere(1)*cos(x_sphere(2)) - &
+           B_sphere(2)*sin(x_sphere(2))]
 
 
       case(3) ! read from dipole csv
@@ -231,7 +246,8 @@ module mod_usr
         ! convert x -> x_spherical
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        x_sphere = [(x(1)**2 + x(2)**2 + x(3)**2)**.5, acos(x(3)/((x(1)**2 + x(2)**2 + x(3)**2)**.5)), atan2(x(2),x(1))]
+        x_sphere = [(x(1)**2 + x(2)**2 + x(3)**2)**.5,&
+            acos(x(3)/((x(1)**2 + x(2)**2 + x(3)**2)**.5)), atan2(x(2),x(1))]
 
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ! Get index of the closest position value
@@ -321,7 +337,8 @@ module mod_usr
         close(2)
 
         ! open ith_dir/Btheta.csv
-        Btheta_file3 = 'dipole_grid/'//trim(r_mult_str)//'_rj_surface/Btheta.csv'
+        Btheta_file3 = 'dipole_grid/'//trim(&
+           r_mult_str)//'_rj_surface/Btheta.csv'
         open(3, file = Btheta_file3)
         ! Read up to the j-1th row of the csv
         ! Read the jth row into the Btheta_tmp array 
@@ -357,9 +374,13 @@ module mod_usr
         ! Ay = Ar*sin(theta)*sin(phi) + Atheta*cos(theta)*sin(phi) + Aphi*cos(phi)
         ! Az = Ar*cos(theta)          - Atheta*sin(theta)          +      0
         ! B[G] => B[G] * 10^4 T/m * 10^2 cm/m
-        B = 1d6 * [B_sphere(1)*sin(x_sphere(2))*cos(x_sphere(3)) + B_sphere(2)*cos(x_sphere(2))*cos(x_sphere(3)) - B_sphere(3)*sin(x_sphere(3)), &
-             B_sphere(1)*sin(x_sphere(2))*sin(x_sphere(3)) + B_sphere(2)*cos(x_sphere(2))*sin(x_sphere(3)) + B_sphere(3)*cos(x_sphere(3)), &
-             B_sphere(1)*cos(x_sphere(2)) - B_sphere(2)*sin(x_sphere(2))]
+        B = 1d6 * [B_sphere(1)*sin(x_sphere(2))*cos(x_sphere(3)) + &
+           B_sphere(2)*cos(x_sphere(2))*cos(x_sphere(3)) - &
+           B_sphere(3)*sin(x_sphere(3)), &
+           B_sphere(1)*sin(x_sphere(2))*sin(x_sphere(3)) + &
+           B_sphere(2)*cos(x_sphere(2))*sin(x_sphere(3)) + &
+           B_sphere(3)*cos(x_sphere(3)), B_sphere(1)*cos(x_sphere(2)) - &
+           B_sphere(2)*sin(x_sphere(2))]
 
       case(4) !read jrm09 from csv
 
@@ -384,7 +405,8 @@ module mod_usr
         ! r is in [cm] -> r csv values are in [m]
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         !print*, x
-        x_sphere = [1d-2*((x(1)**2 + x(2)**2 + x(3)**2)**.5), acos(x(3)/((x(1)**2 + x(2)**2 + x(3)**2)**.5)), atan2(x(2),x(1))]
+        x_sphere = [1d-2*((x(1)**2 + x(2)**2 + x(3)**2)**.5),&
+            acos(x(3)/((x(1)**2 + x(2)**2 + x(3)**2)**.5)), atan2(x(2),x(1))]
         !print*, x_sphere
         !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         ! Get index of the closest position value
@@ -476,7 +498,8 @@ module mod_usr
         !fmt = '(I4.4)'
 
         ! open ith_dir/Br.csv
-        Br_file4 = '/Users/amani3g/jupiter/amrvac/jov/jrm09_grid_2/'//trim(r_mult_str)//'_rj_surface/Br.csv'
+        Br_file4 = '/Users/amani3g/jupiter/amrvac/jov/jrm09_grid_2/'//trim(&
+           r_mult_str)//'_rj_surface/Br.csv'
         open(2, file = Br_file4)
         ! Read up to the j-1th row of the csv
         ! Read the jth row of the Br_file into Br_tmp array
@@ -489,7 +512,8 @@ module mod_usr
         close(2)
 
         ! open ith_dir/Btheta.csv
-        Btheta_file4 = '/Users/amani3g/jupiter/amrvac/jov/jrm09_grid_2/'//trim(r_mult_str)//'_rj_surface/Btheta.csv'
+        Btheta_file4 = '/Users/amani3g/jupiter/amrvac/jov/jrm09_grid_2/'//trim(&
+           r_mult_str)//'_rj_surface/Btheta.csv'
         open(3, file = Btheta_file4)
         ! Read up to the j-1th row of the csv
         ! Read the jth row into the Btheta_tmp array 
@@ -503,7 +527,8 @@ module mod_usr
 
 
         ! open ith_dir/Bphi.csv
-        Bphi_file4 = '/Users/amani3g/jupiter/amrvac/jov/jrm09_grid_2/'//trim(r_mult_str)//'_rj_surface/Bphi.csv'
+        Bphi_file4 = '/Users/amani3g/jupiter/amrvac/jov/jrm09_grid_2/'//trim(&
+           r_mult_str)//'_rj_surface/Bphi.csv'
         open(4, file = Bphi_file4)
         ! Read up to the j-1th row of the csv
         ! Read the jth row in the Bphi_tmp array
@@ -526,9 +551,13 @@ module mod_usr
         ! Ay = Ar*sin(theta)*sin(phi) + Atheta*cos(theta)*sin(phi) + Aphi*cos(phi)
         ! Az = Ar*cos(theta)          - Atheta*sin(theta)          +      0
         ! B[G] => B[G] * 10^4 T/m * 10^2 cm/m
-        B = 1d6 * [B_sphere(1)*sin(x_sphere(2))*cos(x_sphere(3)) + B_sphere(2)*cos(x_sphere(2))*cos(x_sphere(3)) - B_sphere(3)*sin(x_sphere(3)), &
-             B_sphere(1)*sin(x_sphere(2))*sin(x_sphere(3)) + B_sphere(2)*cos(x_sphere(2))*sin(x_sphere(3)) + B_sphere(3)*cos(x_sphere(3)), &
-             B_sphere(1)*cos(x_sphere(2)) - B_sphere(2)*sin(x_sphere(2))]
+        B = 1d6 * [B_sphere(1)*sin(x_sphere(2))*cos(x_sphere(3)) + &
+           B_sphere(2)*cos(x_sphere(2))*cos(x_sphere(3)) - &
+           B_sphere(3)*sin(x_sphere(3)), &
+           B_sphere(1)*sin(x_sphere(2))*sin(x_sphere(3)) + &
+           B_sphere(2)*cos(x_sphere(2))*sin(x_sphere(3)) + &
+           B_sphere(3)*cos(x_sphere(3)), B_sphere(1)*cos(x_sphere(2)) - &
+           B_sphere(2)*sin(x_sphere(2))]
         !print*, 'B in cartesian calculateds'
 
       case default
@@ -544,7 +573,8 @@ module mod_usr
     subroutine get_particle(x, v, q, m, ipart, n_particles, iprob)
       double precision, intent(out) :: x(3), v(3), q, m
       integer, intent(in)           :: ipart, iprob, n_particles
-      double precision              :: ran_vec(4), ran_vec2(2), phi, r, theta, beta, v_mag, v_sph(3), alpha, ran !ipart is the particle number n_particle of n_particles
+      double precision              :: ran_vec(4), ran_vec2(2), phi, r, theta,&
+          beta, v_mag, v_sph(3), alpha, ran !ipart is the particle number n_particle of n_particles
 
       q = charge
       m = mass
@@ -596,25 +626,33 @@ module mod_usr
     end subroutine get_particle
 
     subroutine set_custom_field(w, x, E_field, B_field)
-      double precision, intent(in)  :: w(ixG^T,nw)
-      double precision, intent(in)  :: x(ixG^T,ndim)
-      double precision, intent(out) :: E_field(ixG^T, ndir)
-      double precision, intent(out) :: B_field(ixG^T, ndir)
+      double precision, intent(in)  :: w(ixGlo1:ixGhi1,ixGlo2:ixGhi2,&
+         ixGlo3:ixGhi3,nw)
+      double precision, intent(in)  :: x(ixGlo1:ixGhi1,ixGlo2:ixGhi2,&
+         ixGlo3:ixGhi3,ndim)
+      double precision, intent(out) :: E_field(ixGlo1:ixGhi1,ixGlo2:ixGhi2,&
+         ixGlo3:ixGhi3, ndir)
+      double precision, intent(out) :: B_field(ixGlo1:ixGhi1,ixGlo2:ixGhi2,&
+         ixGlo3:ixGhi3, ndir)
 
-      integer          :: i^D
+      integer          :: i1,i2,i3
       double precision :: E(3), B(3), xtmp(ndim)
 
 
-      {do i^D = ixGlo^D, ixGhi^D\}
-      xtmp = x(i^D, :)
+      do i1 = ixGlo1, ixGhi1
+      do i2 = ixGlo2, ixGhi2
+      do i3 = ixGlo3, ixGhi3
+      xtmp = x(i1,i2,i3, :)
       call get_field(xtmp, E, B)
 
       ! Convert to CGS units, 1 T -> 1e4 Gauss
-      B_field(i^D, :) = B * 1.0d4
+      B_field(i1,i2,i3, :) = B * 1.0d4
 
       ! Convert to CGS units
-      E_field(i^D, :) = E * 1.0d6/const_c
-      {end do\}
+      E_field(i1,i2,i3, :) = E * 1.0d6/const_c
+      end do
+      end do
+      end do
     !print*,'E in cgs:',E(1) * 1.0d6/const_c, 'B in cgs',B(3) * 1.0d4
     !print*,'E/B ratio < 1',(E(1)*1.0d6/const_c)/(B(3)*1.0d4)
     end subroutine set_custom_field

@@ -1,54 +1,32 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import get_data
+import plot_routines as plr
 
+#constants
+rj = 6991100000 #cm
+num = 100
 
 #file name and directory                                                                                          
-dir = '/Users/amani3g/jupiter/amrvac/jov/test_output/'
-outdir = '/Users/amani3g/jupiter/amrvac/jov/output/plots/'
-
+dir = '/Users/amani3g/jupiter/amrvac/jov/output_jrm09_2/5rj/100keV/'
+outdir = '/Users/amani3g/jupiter/amrvac/jov/output_jrm09_2/5rj/100keV/'
+file_base = 'run_onlyz_singlenormal_'
 
 #set up plotting devices
 fig = plt.figure(figsize=(8.0, 8.0))
 ax = fig.add_subplot(111, projection='3d')
 
-#plot jupiter wireframe
-theta, phi = np.mgrid[0:2*np.pi:20j,0:np.pi:10j]
+plr.jupiter_wireframe(ax)
+file_names = plr.get_file_names(dir, file_base, num)
+#print(file_names)
+#index = [49,50,51]
+#new_file_names = np.delete(file_names, index)
+#print(new_file_names[49])
+#plr.plot_3Dtrajectory_raw(file_names, dir, ax)
+plr.particle_3Dtrajectories(file_names, dir, rj, ax)
+#ax.margins(rj,rj, 1)
 
-rj = 7149200000#[m]
-xj = rj*np.cos(theta)*np.sin(phi)
-yj = rj*np.sin(theta)*np.sin(phi)
-zj = rj*np.cos(phi)
-ax.plot_wireframe(xj,yj,zj,color='C1') #the orange spot!
 
-
-#################################
-# Plot multiple particle tracks 
-##################################
-
-#get data from file
-test_name = 'iprob_4_x0_5rj_v0_100eV_qe_qm_'
-particle_name = 'particle_0000'
-
-#loop through each particle track
-num_particles = 10 #set the number of particles
-for i in range(1, num_particles+1):
-
-	if i < 10:
-		file_name = test_name + particle_name + str(0) + str(i) + '.csv'
-		xline1, yline1, zline1, tline1 = get_data.get_lists(dir, file_name,rj)
-		#plot data
-		plt.plot(xline1, yline1, zline1)
-	elif i >= 10: 
-		file_name = test_name + particle_name + str(i) + '.csv'
-		print(file_name)
-		xline1, yline1, zline1, tline1 = get_data.get_lists(dir, file_name,rj)
-		#plot data
-		plt.plot(xline1, yline1, zline1)
-
-	
-	
-	
 
 
 ########################################
@@ -83,7 +61,7 @@ l_arrow = 10**11
 ax.quiver(xb, yb, zb, b1, b2, b3, length = l_arrow, normalize=True)
 plt.title('Dipole Field')
 '''
-plt.title('JRM09 Test Case 1')
+plt.title('JRM09 Electrons at 5Rj 100keV')
 plt.show()
 #plt.savefig(outdir + test_name + str(num_particles) + '.png')
 

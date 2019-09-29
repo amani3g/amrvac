@@ -15,7 +15,7 @@ from mpl_toolkits import mplot3d
 #payload_dict = {}
 
 
-def get_lists(dir, file_name, payloads): #get_lists(dir, file_name, payloads)
+def get_lists(dir, file_name): #get_lists(dir, file_name, payloads)
     ##### really want to make full use of dict object in this function but it works so that's a very low priority
 
     #####################################
@@ -86,7 +86,7 @@ def get_lists_tmax(dir, file_name, tmax):
                            
     return xline, yline, zline, tline
 
-def get_lists_rmax(dir, file_name, rlim):
+def get_lists_rmax(dir, file_name, rmax):
     csv_file = dir+file_name
     # Returns a dictionary containing the csv file
     with open(csv_file, newline = '') as csvfile:
@@ -107,7 +107,7 @@ def get_lists_rmax(dir, file_name, rlim):
 
             #
 
-            if(r > rlim):
+            if(r > rmax):
                 #print(r)
                 xline.append(row.get(' x1'))
                 yline.append(row.get(' x2'))
@@ -120,6 +120,31 @@ def get_lists_rmax(dir, file_name, rlim):
         tline = np.asarray(tline, dtype = np.float64)
 
     return xline, yline, zline, tline
+def get_position_r(dir, file_name, r, err):
+    csv_file = dir+file_name
+    # Returns a dictionary containing the csv file
+    with open(csv_file, newline = '') as csvfile:
+        dict = csv.DictReader(csvfile, delimiter=',')
+   
+        for row in dict:
+            x = float(row.get(' x1'))
+            y = float(row.get(' x2'))
+            z = float(row.get(' x3'))
+            
+            #calculate r
+            r_ = np.sqrt(x**2 + y**2 + z**2)
+            if(r_==r or r_==r+err or r_==r-err):
+                x_ = x
+                y_ = y
+                z_ = z
+                t_ = t
+            else:
+                print("Particle does not reach surface, returning null")
+                x_ = None
+                y_ = None
+                z_ = None
+                t_ = None
+    return x_, y_, z_, t_
 
 def get_minmax(dir, filename):
     

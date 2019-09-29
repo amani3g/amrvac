@@ -42,7 +42,8 @@ def jrm09(r):
 	#Initialize Coeffs, Creating an SHMagCOeffs Class Instance
 	clm = pyshtools.SHMagCoeffs.from_array(ghs, rj)
 
-	mag = clm.expand(lmax = 10, a=r, sampling = 1)
+	#Expand coefficients, create a mag object
+	mag = clm.expand(lmax = 10, a=r, sampling = 1) #need to fix s
 	print('mag calculated!')
 
 	#SHMagGrid saves the Br, Btheta, Bphi, Btotal, Vpot as SHGrid Class Instances
@@ -87,7 +88,3 @@ def dipole(r):
 
 	
 	return Br, Btheta, Bphi, Bmag, lat_, lon_
-
-mag, Br, Btheta, Bphi, Bmag, Vp, lat, lon = jrm09(71492000)
-mag.plot()
-plt.show()

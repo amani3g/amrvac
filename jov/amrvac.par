@@ -2,7 +2,7 @@
         autoconvert   = f
         saveprim      = T
         nwauxio       = 0
-        base_filename = 'output/iprob_4_x0_5rj_v0_100eV_qe_qm_testshtools'
+        base_filename = 'output_jrm09_2/5rj/100keV/run_onlyz_singlenormal'
         convert_type  = 'vtuBmpi'
  /
 
@@ -12,7 +12,7 @@
  /
 
  &stoplist
-        time_max = 100.0
+        time_max = 100.0 
  /
 
  &methodlist
@@ -31,21 +31,21 @@
  /
 
  &meshlist
-        iprob = 4 !dipole case
+        iprob = 4 !jrm09 case
         refine_criterion = 3
         refine_max_level = 1
-        domain_nx1    = 256
-        domain_nx2    = 256
-        domain_nx3    = 256
-        block_nx1 = 64
-        block_nx2 = 64
-        block_nx3 = 64
-        xprobmin1     = -7.1492d9 !-150.0d10
-        xprobmax1     = 7.1492d9 !150.0d10
-        xprobmin2     = -7.1492d9 !-150.0d10
-        xprobmax2     = 7.1492d9 !150.0d10
-        xprobmin3     = -7.1492d9!-150.0d10
-        xprobmax3     = 7.1492d9 !150.0d10
+        domain_nx1    = 32
+        domain_nx2    = 32
+        domain_nx3    = 32
+        block_nx1 = 16
+        block_nx2 = 16
+        block_nx3 = 16
+        xprobmin1     = -3.57d11 !50rj [cm]
+        xprobmax1     = 3.57d11 !150.0d10
+        xprobmin2     = -3.57d11 !-150.0d10
+        xprobmax2     = 3.57d11 !150.0d10
+        xprobmin3     = -3.57d11!-150.0d10
+        xprobmax3     = 3.57d11 !150.0d10
  /
 
  &paramlist
@@ -59,7 +59,7 @@
 
  &particles_list
         physics_type_particles='Lorentz'
-        num_particles= 10 
+        num_particles= 100
         dtsave_particles = 1.0d-2
         write_ensemble = f
         write_individual = t
